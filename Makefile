@@ -7,7 +7,7 @@ MAPGRABBER := ../../tools/MapGrabber
 GFXSRC := GFX/Bg.bmp GFX/Sprites.bmp
 
 $(APP).sna : $(SRC) $(GFXSRC)
-	zcc +zxn -vn -startup=0 -clib=$(LIB) $(SRC) -o $(APP) -create-app -Cz"--sna"
+	zcc +zxn -vn -startup=31 -clib=$(LIB) $(SRC) -o $(APP) -pragma-include:zpragma.inc -create-app -Cz"--sna"
 
 	$(MAPGRABBER) GFX/Bg b
 	mv GFX/bg.nxi bg.bin

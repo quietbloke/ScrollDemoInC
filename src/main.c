@@ -1,13 +1,15 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <input.h>
-#include <intrinsic.h>
 #include <arch/zxn.h>
 
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-//#include <math.h>
+#include <im2.h>
+#include <z80.h>
+#include <intrinsic.h>
+
 #include "lores.h"
 #include "sprite.h"
 
@@ -78,6 +80,15 @@ static signed char sinOffsetY[] = {
 	-2 ,-1 ,-1 , 0
 };
 
+unsigned char loresAngleSin = 0;
+unsigned char loresAngleCos = 64;
+
+unsigned char spriteAngleSin = 0;
+unsigned char spriteAngleCos = 0;
+
+unsigned char stage = 0;
+unsigned char stage_counter = 0;
+
 /* --------------------------------- */
 
 static void initialise();
@@ -85,67 +96,22 @@ static void CreateRustyPixelSprite();
 
 /* --------------------------------- */
 
-int main(void)
+IM2_DEFINE_ISR_8080(isr)
 {
-  unsigned char loresAngleSin = 0;
-  unsigned char loresAngleCos = 64;
-
-  unsigned char spriteAngleSin = 0;
-  unsigned char spriteAngleCos = 0;
-
-  unsigned char stage = 0;
-  unsigned char stage_counter = 0;
-
-  initialise();
-
-  loResSetInitPallete();
-
-  zx_border(INK_BLUE);
-
-  loResSetClipWindow ( 0, 255, 255, 255); // hide the bg 
-  // hide the sprites
-
-  if ( !loResLoadImage("bg.bin"))
-  {
-    zx_border(7);
-  }
-
-  if ( !sprites_load_patterns("sprites.spr"))
-  {
-    zx_border(7);
-  }
-
-  CreateRustyPixelSprite();
-
-  // Draw the 4 rounded corner sprites
-  set_sprite(32,32+192-16, 32);
-  set_sprite(32+256-16,32+192-16, 33);
-  set_sprite(32, 32, 34);
-  set_sprite(32+256-16, 32, 35);
-
-  loResSetOffsetX(sinOffsetX[loresAngleSin]);
-  loResSetOffsetY(sinOffsetX[loresAngleCos]);
-
-  set_sprite_pattern_index(0);
-  set_sprite(255, 255, 0);
-
-
-// keep going till space key is pressed
-
-  while(!in_key_pressed(IN_KEY_SCANCODE_SPACE) ){
+  zx_border(0);
 
 // Temp code to slow things down.
-//    for ( char p =0; p < 4; p++)
-//    {
-//      unsigned int x = rand()%128;
-//      unsigned int y = rand()%96;
-//      loResPlot(x, y, x);
-//    }
+//  for ( char p =0; p < 2; p++)
+//  {
+//    unsigned int x = rand()%128;
+//    unsigned int y = rand()%96;
+//    loResPlot(x, y, x);
+//  }
 
   if ( stage == 0)
   {
     stage_counter++;
-    if ( stage_counter == 240)
+    if ( stage_counter == 30)
     {
       stage++;
       stage_counter = 0;
@@ -184,15 +150,57 @@ int main(void)
       spriteAngleCos = 0;
     }
   }
-  zx_border(1);
 
-  intrinsic_halt();
-  zx_border(0);
+  zx_border(1);
 }
 
-  // wait till no key is pressed then a key is pressed before we quit for real
-  in_wait_nokey();
-  in_wait_key();
+int main(void)
+{
+  initialise();
+
+  loResSetInitPallete();
+
+  zx_border(INK_BLUE);
+
+  loResSetClipWindow ( 0, 255, 255, 255); // hide the bg 
+
+  if ( !loResLoadImage("bg.bin"))
+  {
+    zx_border(7);
+  }
+
+  if ( !sprites_load_patterns("sprites.spr"))
+  {
+    zx_border(7);
+  }
+
+  CreateRustyPixelSprite();
+
+  // Draw the 4 rounded corner sprites
+  set_sprite(32,32+192-16, 32);
+  set_sprite(32+256-16,32+192-16, 33);
+  set_sprite(32, 32, 34);
+  set_sprite(32+256-16, 32, 35);
+
+  loResSetOffsetX(sinOffsetX[loresAngleSin]);
+  loResSetOffsetY(sinOffsetX[loresAngleCos]);
+
+  set_sprite_pattern_index(0);
+  set_sprite(255, 255, 0);
+
+  // NOTE : we need to move the code org to 0x8184 (zxpragma.inc)
+  // because the interrupt table and code is in 0x8000 - 0x8183
+
+  im2_init((void *)0x8000);
+  memset((void *)0x8000, 0x81, 257);
+  z80_bpoke(0x8181, 0xc3);   // z80 JP instruction
+  z80_wpoke(0x8182, (unsigned int)isr);
+   
+   // enable interrupts
+  intrinsic_ei();
+
+// keep going till space key is pressed
+  while(!in_key_pressed(IN_KEY_SCANCODE_SPACE) );
 
   return 0;
 }
@@ -207,6 +215,7 @@ static void initialise()
   IO_NEXTREG_REG = REG_SPRITE_LAYER_SYSTEM;
   IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE; 
 }
+
 static void CreateRustyPixelSprite()
 {
   set_sprite(128, 64, 0);
