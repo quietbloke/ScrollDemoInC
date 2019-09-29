@@ -98,9 +98,15 @@ static void CreateRustyPixelSprite();
 
 IM2_DEFINE_ISR_8080(isr)
 {
-  zx_border(0);
+     unsigned char save;
+   
+   // save nextreg register
+   
+   save = IO_NEXTREG_REG;
 
-// Temp code to slow things down.
+//  zx_border(0);
+
+  // Temp code to slow things down.
 //  for ( char p =0; p < 2; p++)
 //  {
 //    unsigned int x = rand()%128;
@@ -108,50 +114,11 @@ IM2_DEFINE_ISR_8080(isr)
 //    loResPlot(x, y, x);
 //  }
 
-  if ( stage == 0)
-  {
-    stage_counter++;
-    if ( stage_counter == 30)
-    {
-      stage++;
-      stage_counter = 0;
-    }
-  }
+   // restore nextreg register
+   
+   IO_NEXTREG_REG = save;
 
-  if ( stage == 1)
-  {
-    loResSetClipWindow ( 0, 255, 0, stage_counter); // hide the bg 
-    stage_counter++;
-    if ( stage_counter == 196)
-    {
-      stage++;
-      stage_counter = 0;
-    }
-  }
-
-  if ( stage > 0)
-  {
-    loResSetOffsetX(sinOffsetX[loresAngleSin]);
-    loResSetOffsetY(sinOffsetX[loresAngleCos]);
-    loresAngleSin += 1;
-    loresAngleCos += 1;
-  }
-
-  if ( stage > 1)
-  {
-    set_sprite_pattern_index(0);
-    set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
-
-    spriteAngleSin += 1;
-    spriteAngleCos += 1;
-
-    if ( spriteAngleCos > 219)
-    {
-      spriteAngleCos = 0;
-    }
-  }
-
-  zx_border(1);
+//  zx_border(INK_YELLOW);
 }
 
 int main(void)
@@ -200,7 +167,70 @@ int main(void)
   intrinsic_ei();
 
 // keep going till space key is pressed
-  while(!in_key_pressed(IN_KEY_SCANCODE_SPACE) );
+  while(!in_key_pressed(IN_KEY_SCANCODE_SPACE) )
+  {
+    // wait until line 192 is active
+
+    // REG_ACTIVE_VIDEO_LINE_H
+    IO_NEXTREG_REG = REG_ACTIVE_VIDEO_LINE_L;
+    while (IO_NEXTREG_DAT != 192);
+
+    zx_border(INK_BLACK);
+
+  if ( stage == 0)
+  {
+    stage_counter++;
+    if ( stage_counter == 30)
+    {
+      stage++;
+      stage_counter = 0;
+    }
+  }
+
+  if ( stage == 1)
+  {
+    loResSetClipWindow ( 0, 255, 0, stage_counter); // hide the bg 
+    stage_counter++;
+    if ( stage_counter == 196)
+    {
+      stage++;
+      stage_counter = 0;
+    }
+  }
+
+  if ( stage > 0)
+  {
+    loResSetOffsetX(sinOffsetX[loresAngleSin]);
+    loResSetOffsetY(sinOffsetX[loresAngleCos]);
+    loresAngleSin += 1;
+    loresAngleCos += 1;
+  }
+
+  if ( stage > 1)
+  {
+    set_sprite_pattern_index(0);
+    set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
+
+    spriteAngleSin += 1;
+    spriteAngleCos += 1;
+
+    if ( spriteAngleCos > 219)
+    {
+      spriteAngleCos = 0;
+    }
+  }
+
+  // Temp code to slow things down.
+//  for ( char p =0; p < 1; p++)
+//  {
+//    unsigned int x = rand()%128;
+//    unsigned int y = rand()%96;
+//    loResPlot(x, y, x);
+//  }
+
+    zx_border(INK_BLUE);
+
+  }
 
   return 0;
 }
