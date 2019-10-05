@@ -243,7 +243,38 @@ static void initialise()
 
   // Enable the lowres screen
   IO_NEXTREG_REG = REG_SPRITE_LAYER_SYSTEM;
-  IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE; 
+  IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE | __RSLS_LAYER_PRIORITY_LSU; 
+
+  // turn on layer 2
+  ZXN_NEXTREG(REG_LAYER_2_RAM_BANK, 9);
+
+  IO_LAYER_2_CONFIG = IL2C_SHOW_LAYER_2;
+
+//   tshr_cls_pix(0xe3);
+
+//  ZXN_WRITE_REG(REG_GLOBAL_TRANSPARENCY_COLOR, 0x00);
+
+  for ( unsigned char bank = 18; bank < 24; bank++)
+  {
+    ZXN_WRITE_MMU7(bank);
+
+    unsigned char* basepokeaddress = (unsigned char *)0xE000;
+
+    unsigned char col = 0;
+    for ( unsigned int p=0; p < 0x2000; p++)
+    {
+      if (bank == 22)
+      {
+        basepokeaddress[p] = 0xe4; //col++;
+      }
+      else
+      {
+        basepokeaddress[p] = 0xe3; //col++;
+      }      
+    }
+  }
+
+  ZXN_WRITE_MMU7(1);
 }
 
 static void CreateRustyPixelSprite()
