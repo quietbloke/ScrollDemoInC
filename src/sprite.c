@@ -22,7 +22,7 @@ void enable_sprites()
 
 void set_sprite_pattern_index(uint8_t slot)
 {
-    IO_SPRITE_SLOT = slot;
+  IO_SPRITE_SLOT = slot;
 }
 
 void set_sprite(uint16_t xpos, uint8_t ypos, uint8_t spritePattern)
@@ -53,10 +53,11 @@ void set_sprite_composite(uint16_t xpos, uint8_t ypos, uint8_t spritePattern)
 
 void set_pattern(uint8_t *sprite_pattern)
 {
-    uint8_t index = 0;
-    do {
-        IO_SPRITE_PATTERN = sprite_pattern[index];
-    } while(index++ != 255);
+  uint8_t index = 0;
+  do 
+  {
+    IO_SPRITE_PATTERN = sprite_pattern[index];
+  } while(index++ != 255);
 }
 
 bool sprites_load_patterns(char* filename)

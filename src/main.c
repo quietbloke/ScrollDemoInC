@@ -12,6 +12,7 @@
 
 #include "lores.h"
 #include "sprite.h"
+#include "layer2.h"
 
 #define RUSTY_PIXEL_SPRITE 0
 static signed char sinOffsetX[] = {
@@ -101,10 +102,9 @@ IM2_DEFINE_ISR_8080(isr)
      unsigned char save;
    
    // save nextreg register
+    zx_border(INK_BLACK);
    
    save = IO_NEXTREG_REG;
-
-//  zx_border(0);
 
   // Temp code to slow things down.
 //  for ( char p =0; p < 2; p++)
@@ -114,11 +114,11 @@ IM2_DEFINE_ISR_8080(isr)
 //    loResPlot(x, y, x);
 //  }
 
-   // restore nextreg register
+  // restore nextreg register
    
-   IO_NEXTREG_REG = save;
+  IO_NEXTREG_REG = save;
 
-//  zx_border(INK_YELLOW);
+  zx_border(INK_BLUE);
 }
 
 int main(void)
@@ -177,56 +177,48 @@ int main(void)
 
     zx_border(INK_BLACK);
 
-  if ( stage == 0)
-  {
-    stage_counter++;
-    if ( stage_counter == 30)
+    if ( stage == 0)
     {
-      stage++;
-      stage_counter = 0;
+      stage_counter++;
+      if ( stage_counter == 30)
+      {
+        stage++;
+        stage_counter = 0;
+      }
     }
-  }
 
-  if ( stage == 1)
-  {
-    loResSetClipWindow ( 0, 255, 0, stage_counter); // hide the bg 
-    stage_counter++;
-    if ( stage_counter == 196)
+    if ( stage == 1)
     {
-      stage++;
-      stage_counter = 0;
+      loResSetClipWindow ( 0, 255, 0, stage_counter); // hide the bg 
+      stage_counter++;
+      if ( stage_counter == 196)
+      {
+        stage++;
+        stage_counter = 0;
+      }
     }
-  }
 
-  if ( stage > 0)
-  {
-    loResSetOffsetX(sinOffsetX[loresAngleSin]);
-    loResSetOffsetY(sinOffsetX[loresAngleCos]);
-    loresAngleSin += 1;
-    loresAngleCos += 1;
-  }
-
-  if ( stage > 1)
-  {
-    set_sprite_pattern_index(0);
-    set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
-
-    spriteAngleSin += 1;
-    spriteAngleCos += 1;
-
-    if ( spriteAngleCos > 219)
+    if ( stage > 0)
     {
-      spriteAngleCos = 0;
+      loResSetOffsetX(sinOffsetX[loresAngleSin]);
+      loResSetOffsetY(sinOffsetX[loresAngleCos]);
+      loresAngleSin += 1;
+      loresAngleCos += 1;
     }
-  }
 
-  // Temp code to slow things down.
-//  for ( char p =0; p < 1; p++)
-//  {
-//    unsigned int x = rand()%128;
-//    unsigned int y = rand()%96;
-//    loResPlot(x, y, x);
-//  }
+    if ( stage > 1)
+    {
+      set_sprite_pattern_index(0);
+      set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
+
+      spriteAngleSin += 1;
+      spriteAngleCos += 1;
+
+      if ( spriteAngleCos > 219)
+      {
+        spriteAngleCos = 0;
+      }
+    }
 
     zx_border(INK_BLUE);
 
@@ -241,40 +233,17 @@ static void initialise()
 {
   zx_border(INK_BLUE);
 
-  // Enable the lowres screen
+  // Enable the lowres screen, show sprites
   IO_NEXTREG_REG = REG_SPRITE_LAYER_SYSTEM;
-  IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE | __RSLS_LAYER_PRIORITY_LSU; 
+  IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE | RSLS_LAYER_PRIORITY_LSU; 
 
-  // turn on layer 2
-  ZXN_NEXTREG(REG_LAYER_2_RAM_BANK, 9);
+  layer2Initialise();
+  layer2Clear(0xe3);
 
-  IO_LAYER_2_CONFIG = IL2C_SHOW_LAYER_2;
+  layer2WriteText(2, 10, "SCROLLNUTTER");
+  layer2WriteText(3, 11, "NEXT  DEMO");
 
-//   tshr_cls_pix(0xe3);
-
-//  ZXN_WRITE_REG(REG_GLOBAL_TRANSPARENCY_COLOR, 0x00);
-
-  for ( unsigned char bank = 18; bank < 24; bank++)
-  {
-    ZXN_WRITE_MMU7(bank);
-
-    unsigned char* basepokeaddress = (unsigned char *)0xE000;
-
-    unsigned char col = 0;
-    for ( unsigned int p=0; p < 0x2000; p++)
-    {
-      if (bank == 22)
-      {
-        basepokeaddress[p] = 0xe4; //col++;
-      }
-      else
-      {
-        basepokeaddress[p] = 0xe3; //col++;
-      }      
-    }
-  }
-
-  ZXN_WRITE_MMU7(1);
+  layer2Show();
 }
 
 static void CreateRustyPixelSprite()
