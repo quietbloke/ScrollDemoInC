@@ -13,6 +13,7 @@
 #include "lores.h"
 #include "sprite.h"
 #include "layer2.h"
+#include "copper.h"
 
 #define RUSTY_PIXEL_SPRITE 0
 static signed char sinOffsetX[] = {
@@ -115,6 +116,8 @@ IM2_DEFINE_ISR_8080(isr)
 //  }
 
   // restore nextreg register
+    copperRun();
+
    
   IO_NEXTREG_REG = save;
 
@@ -162,11 +165,11 @@ int main(void)
   memset((void *)0x8000, 0x81, 257);
   z80_bpoke(0x8181, 0xc3);   // z80 JP instruction
   z80_wpoke(0x8182, (unsigned int)isr);
-   
-   // enable interrupts
+
+  // enable interrupts
   intrinsic_ei();
 
-// keep going till space key is pressed
+  // keep going till space key is pressed
   while(!in_key_pressed(IN_KEY_SCANCODE_SPACE) )
   {
     // wait until line 192 is active

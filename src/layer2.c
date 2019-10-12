@@ -100,6 +100,8 @@ void layer2WriteText( unsigned char xTile,  unsigned char yTile, char* message)
 
   unsigned char bankOffset = yTile >> 1;
 
+  int saveMmuValue = ZXN_READ_MMU6();
+
   ZXN_WRITE_MMU6(font4BankStart+1);
   ZXN_WRITE_MMU1(layer2BankStart + bankOffset );
 
@@ -138,7 +140,7 @@ void layer2WriteText( unsigned char xTile,  unsigned char yTile, char* message)
 //    }
 //  }
 
-  ZXN_WRITE_MMU6(1);
+  ZXN_WRITE_MMU6(saveMmuValue);
   ZXN_WRITE_MMU1(255);
 }
 

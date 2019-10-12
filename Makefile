@@ -1,6 +1,6 @@
 APP := scrolldemo
 LIB := sdcc_iy
-SRC := src/main.c src/lores.c src/sprite.c src/layer2.c
+SRC := src/main.c src/lores.c src/sprite.c src/layer2.c src/copper.c
 EMU := ../../tools/CSpect/CSpect.exe -zxnext -s14 -w4 -r  -60 -vsync -sound -mmc=./
 
 MAPGRABBER := ../../tools/MapGrabber 
