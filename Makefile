@@ -15,8 +15,19 @@ $(APP).sna : $(SRC) $(GFXSRC)
 	$(MAPGRABBER) GFX/Sprites spr s16 r0
 	mv GFX/sprites.spr sprites.spr
 
+	$(MAPGRABBER) GFX/Font s32 nomap r0
+	mv GFX/Font.nxt font.nxt
+
+	$(MAPGRABBER) GFX/Font2 s32 nomap r0
+	mv GFX/Font2.nxt font2.nxt
+
+	$(MAPGRABBER) GFX/Font3 s32 nomap r0
+	mv GFX/Font3.nxt font3.nxt
+
 	$(MAPGRABBER) GFX/Font4 s16 nomap r0
 	mv GFX/Font4.nxt font4.nxt
+
+
 
 
 run: $(APP).sna

@@ -41,6 +41,12 @@ static signed wibble[] = {
 
 unsigned char wibbleOffset = 0;
 
+unsigned char scroll1Offset = 0;
+unsigned char scroll2Offset = 0;
+unsigned char scroll3Offset = 0;
+unsigned char scroll4Offset = 0;
+unsigned char scroll5Offset = 0;
+
 void copperRun()
 {
     // Start Send
@@ -50,15 +56,70 @@ void copperRun()
     // Select copper data port
     IO_NEXTREG_REG = REG_COPPER_DATA;
 
-//    for (unsigned char *p = copper; p != copper_end; ++p)
-//        IO_NEXTREG_DAT = *p;
-    // wait till scanline 162;
+    // wait till scanline 0;
     IO_NEXTREG_DAT = COPPER_WAIT;
     IO_NEXTREG_DAT = 0;
 
     // Change layer2 x-offset
     IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
     IO_NEXTREG_DAT = 0x00;
+
+	// change order of layers
+    IO_NEXTREG_DAT = REG_SPRITE_LAYER_SYSTEM;
+    IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE | RSLS_LAYER_PRIORITY_SLU;
+
+	// offset for first scroller
+	IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
+	IO_NEXTREG_DAT = scroll1Offset++;
+
+    // wait till scanline 32 - second scroller;
+    IO_NEXTREG_DAT = COPPER_WAIT;
+    IO_NEXTREG_DAT = 32;
+
+    IO_NEXTREG_DAT = REG_SPRITE_LAYER_SYSTEM;
+    IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE | RSLS_LAYER_PRIORITY_LSU;
+
+	// offset for second scroller
+	IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
+	IO_NEXTREG_DAT = scroll2Offset;
+	scroll2Offset += 2;
+
+    // wait till scanline 64 - second scroller;
+    IO_NEXTREG_DAT = COPPER_WAIT;
+    IO_NEXTREG_DAT = 64;
+
+	// offset for third scroller
+	IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
+	IO_NEXTREG_DAT = scroll3Offset;
+	scroll3Offset += 4;
+
+    // wait till scanline 96 - second scroller;
+    IO_NEXTREG_DAT = COPPER_WAIT;
+    IO_NEXTREG_DAT = 96;
+
+	// offset for third scroller
+	IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
+	IO_NEXTREG_DAT = scroll4Offset;
+	scroll4Offset += 2;
+
+    // wait till scanline 128 - second scroller;
+    IO_NEXTREG_DAT = COPPER_WAIT;
+    IO_NEXTREG_DAT = 128;
+
+	// offset for third scroller
+	IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
+	IO_NEXTREG_DAT = scroll5Offset;
+	scroll5Offset += 1;
+
+
+    // wait till scanline 128;
+    IO_NEXTREG_DAT = COPPER_WAIT;
+    IO_NEXTREG_DAT = 128;
+
+    IO_NEXTREG_DAT = REG_SPRITE_LAYER_SYSTEM;
+    IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE | RSLS_LAYER_PRIORITY_SLU;
+
+
 
     unsigned char wibblePos = wibbleOffset;
     for ( unsigned char scanline = 160; scanline < 192; scanline++)

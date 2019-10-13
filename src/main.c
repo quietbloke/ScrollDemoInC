@@ -246,6 +246,12 @@ static void initialise()
   layer2WriteText(2, 10, "SCROLLNUTTER");
   layer2WriteText(3, 11, "NEXT  DEMO");
 
+  layer2WriteBigText(0, 0, "HELLO", fontBankStart);
+  layer2WriteBigText(0, 1, "WORLD!", font2BankStart);
+  layer2WriteBigText(0, 2, "FONT 3", font3BankStart);
+  layer2WriteBigText(0, 3, "FONT 2", font2BankStart);
+  layer2WriteBigText(0, 4, "FONT 1", fontBankStart);
+
   layer2Show();
 }
 

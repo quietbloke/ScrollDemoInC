@@ -5,15 +5,15 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <arch/zxn/esxdos.h>
+#include "layer2.h"
 
 #define layer216KBankStart 9
 #define layer2BankStart (layer216KBankStart*2)
 
-#define font4BankStart 24
-
 void layer2WriteCharacter( unsigned char* charAddress, unsigned char* layer2Address, char character);
+void layer2WriteBigCharacter( unsigned char* charAddress, unsigned char* layer2Address, char character);
 
-bool loadFont4(char* filename)
+bool loadFont(char* filename, unsigned int startBank, unsigned char totalBanks)
 {
   uint8_t filehandle;
   errno = 0;
@@ -26,19 +26,15 @@ bool loadFont4(char* filename)
     return false;
   }
 
-  for (unsigned char bankIndex = 0; bankIndex < 2; bankIndex++)
+  for (unsigned char bankIndex = 0; bankIndex <= totalBanks; bankIndex++)
   {
     unsigned char* destination = 0x2000;
-    ZXN_WRITE_MMU1(font4BankStart + bankIndex);
+    ZXN_WRITE_MMU1(startBank + bankIndex);
 
-    for ( unsigned char ypos = 0; ypos < 8; ypos++)
+    esxdos_f_read(filehandle, (void *) destination, 1024*8);
+    if (errno)
     {
-      esxdos_f_read(filehandle, (void *) destination, 1024);
-      if (errno)
-      {
-        return false;
-      }
-      destination += 1024;
+      return false;
     }
   }
 
@@ -54,15 +50,10 @@ void layer2Initialise()
   ZXN_NEXTREG(REG_LAYER_2_RAM_BANK, layer216KBankStart);
 
   // Load fonts
-  loadFont4("font4.nxt");
-
-//  IO_LAYER_2_CONFIG = IL2C_SHOW_LAYER_2;
-
-//   tshr_cls_pix(0xe3);
-
-//  ZXN_WRITE_REG(REG_GLOBAL_TRANSPARENCY_COLOR, 0x00);
-
-//  ZXN_WRITE_MMU1(255);
+  loadFont("font.nxt", fontBankStart, 8);
+  loadFont("font2.nxt", font2BankStart, 8);
+  loadFont("font3.nxt", font3BankStart, 8);
+  loadFont("font4.nxt", font4BankStart, 2);
 }
 
 void layer2Clear(unsigned char colour)
@@ -151,6 +142,59 @@ void layer2WriteCharacter( unsigned char* charAddress, unsigned char* layer2Addr
     for ( unsigned int charx = 0; charx < 16; charx++)
     {
       unsigned char pixel = charAddress[character * 256 + chary * 16 + charx];
+      layer2Address[chary * 256 + charx] = pixel;
+    }
+  }
+}
+
+void layer2WriteBigText( unsigned char xTile,  unsigned char yTile, char* message, unsigned int fontBank)
+{
+  if ( xTile > 7)
+    return;
+  if ( yTile > 5)
+    return;
+
+  if ( message == "")
+    return;
+
+  unsigned char bankOffset = yTile;
+
+  int saveMmuValue = ZXN_READ_MMU6();
+
+  ZXN_WRITE_MMU1(layer2BankStart + bankOffset );
+
+  unsigned char* fontaddress = (unsigned char *)0xc000;
+  unsigned char* layer2address = (unsigned char *)(0x2000 + (32 * xTile));
+
+  unsigned char charPos = 0;
+  while(message[charPos] != 0x00)
+  {
+    unsigned char character = message[charPos];
+
+    character -= 32;
+    unsigned char fontCharBankOffset = character / 8;
+
+    ZXN_WRITE_MMU6(fontBank+fontCharBankOffset);
+
+    character = character & 0x07;
+
+    layer2WriteBigCharacter(fontaddress, layer2address, character);
+
+    charPos++;
+    layer2address += 32;
+  }
+
+  ZXN_WRITE_MMU6(saveMmuValue);
+  ZXN_WRITE_MMU1(255);
+}
+
+void layer2WriteBigCharacter( unsigned char* charAddress, unsigned char* layer2Address, char character)
+{
+  for ( unsigned int chary = 0; chary < 32; chary++)
+  {
+    for ( unsigned int charx = 0; charx < 32; charx++)
+    {
+      unsigned char pixel = charAddress[character * 1024 + chary * 32 + charx];
       layer2Address[chary * 256 + charx] = pixel;
     }
   }
