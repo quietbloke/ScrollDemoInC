@@ -14,6 +14,7 @@
 #include "sprite.h"
 #include "layer2.h"
 #include "copper.h"
+#include "scroller.h"
 
 #define RUSTY_PIXEL_SPRITE 0
 static signed char sinOffsetX[] = {
@@ -103,7 +104,7 @@ IM2_DEFINE_ISR_8080(isr)
      unsigned char save;
    
    // save nextreg register
-    zx_border(INK_BLACK);
+//    zx_border(INK_BLACK);
    
    save = IO_NEXTREG_REG;
 
@@ -118,14 +119,18 @@ IM2_DEFINE_ISR_8080(isr)
   // restore nextreg register
     copperRun();
 
+//    Scroller_Update();
    
   IO_NEXTREG_REG = save;
 
-  zx_border(INK_BLUE);
+//  zx_border(INK_BLUE);
 }
 
 int main(void)
 {
+  ZXN_WRITE_REG(REG_TURBO_MODE, 2);
+
+
   initialise();
 
   loResSetInitPallete();
@@ -178,7 +183,10 @@ int main(void)
     IO_NEXTREG_REG = REG_ACTIVE_VIDEO_LINE_L;
     while (IO_NEXTREG_DAT != 192);
 
-    zx_border(INK_BLACK);
+//    zx_border(INK_BLACK);
+
+    Update();
+    Render();
 
     if ( stage == 0)
     {
@@ -203,6 +211,7 @@ int main(void)
 
     if ( stage > 0)
     {
+      Scroller_Update();
       loResSetOffsetX(sinOffsetX[loresAngleSin]);
       loResSetOffsetY(sinOffsetX[loresAngleCos]);
       loresAngleSin += 1;
@@ -222,8 +231,9 @@ int main(void)
         spriteAngleCos = 0;
       }
     }
+    Scroller_Render();
 
-    zx_border(INK_BLUE);
+//    zx_border(INK_BLUE);
 
   }
 
@@ -231,6 +241,16 @@ int main(void)
 }
 
 /* --------------------------------- */
+
+static void Update()
+{
+
+}
+
+static void Render()
+{
+
+}
 
 static void initialise()
 {
@@ -246,11 +266,12 @@ static void initialise()
   layer2WriteText(2, 10, "SCROLLNUTTER");
   layer2WriteText(3, 11, "NEXT  DEMO");
 
-  layer2WriteBigText(0, 0, "HELLO", fontBankStart);
-  layer2WriteBigText(0, 1, "WORLD!", font2BankStart);
-  layer2WriteBigText(0, 2, "FONT 3", font3BankStart);
-  layer2WriteBigText(0, 3, "FONT 2", font2BankStart);
-  layer2WriteBigText(0, 4, "FONT 1", fontBankStart);
+  Scroller_Init();
+//  layer2WriteBigText(0, 0, "HELLO", fontBankStart);
+//  layer2WriteBigText(0, 1, "WORLD!", font2BankStart);
+//  layer2WriteBigText(0, 2, "FONT 3", font3BankStart);
+//  layer2WriteBigText(0, 3, "FONT 2", font2BankStart);
+//  layer2WriteBigText(0, 4, "FONT 1", fontBankStart);
 
   layer2Show();
 }
