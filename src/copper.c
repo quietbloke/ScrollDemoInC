@@ -3,6 +3,7 @@
 #include <arch/zxn.h>
 
 #include "scroller.h"
+#include "colourbars.h"
 
 #define COPPER_WAIT 0x80;
 
@@ -56,10 +57,6 @@ void copperRun()
     IO_NEXTREG_DAT = COPPER_WAIT;
     IO_NEXTREG_DAT = 0;
 
-    // Change layer2 x-offset
-    IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
-    IO_NEXTREG_DAT = 0x00;
-
 	// change order of layers
     IO_NEXTREG_DAT = REG_SPRITE_LAYER_SYSTEM;
     IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE | RSLS_LAYER_PRIORITY_SLU;
@@ -69,6 +66,9 @@ void copperRun()
 
 	IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
 	IO_NEXTREG_DAT = scroller->scrXPos;
+
+//	ColourBars_Render(0);
+//	ColourBars_Update_Test(0);
 
     // wait till scanline 32 - second scroller;
     IO_NEXTREG_DAT = COPPER_WAIT;
@@ -83,6 +83,9 @@ void copperRun()
 	IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
 	IO_NEXTREG_DAT = scroller->scrXPos;
 
+//	ColourBars_Render(1);
+	ColourBars_Update_Test(1);
+
     // wait till scanline 64 - second scroller;
     IO_NEXTREG_DAT = COPPER_WAIT;
     IO_NEXTREG_DAT = 64;
@@ -93,6 +96,9 @@ void copperRun()
 	IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
 	IO_NEXTREG_DAT = scroller->scrXPos;
 
+//	ColourBars_Render(2);
+	ColourBars_Update_Test(2);
+
     // wait till scanline 96 - second scroller;
     IO_NEXTREG_DAT = COPPER_WAIT;
     IO_NEXTREG_DAT = 96;
@@ -101,6 +107,8 @@ void copperRun()
 	scroller = Scroller_Get(3);
 	IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
 	IO_NEXTREG_DAT = scroller->scrXPos;
+
+	ColourBars_Update_Test(3);
 
     // wait till scanline 128 - second scroller;
     IO_NEXTREG_DAT = COPPER_WAIT;
@@ -114,6 +122,8 @@ void copperRun()
     IO_NEXTREG_DAT = REG_SPRITE_LAYER_SYSTEM;
     IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE | RSLS_LAYER_PRIORITY_SLU;
 
+//	ColourBars_Render(3);
+	ColourBars_Update_Test(4);
 
     unsigned char wibblePos = wibbleOffset;
     for ( unsigned char scanline = 160; scanline < 192; scanline++)
@@ -129,6 +139,8 @@ void copperRun()
     }
     wibbleOffset++;
 
+
+	// done
     IO_NEXTREG_DAT = 0xff;
     IO_NEXTREG_DAT = 0xff;
 

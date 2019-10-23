@@ -49,18 +49,20 @@ void loResSetClipWindow(unsigned char left, unsigned char right, unsigned char t
 void loResSetInitPallete()
 {
   IO_NEXTREG_REG = REG_PALETTE_CONTROL;
-  IO_NEXTREG_DAT = RPC_SELECT_ULA_PALETTE_1 | RPC_ENABLE_ULANEXT | RPC_ENABLE_ULA_PALETTE_1;
+  IO_NEXTREG_DAT = RPC_SELECT_ULA_PALETTE_0 | RPC_ENABLE_ULANEXT | RPC_ENABLE_ULA_PALETTE_0;
 
   IO_NEXTREG_REG = REG_PALETTE_VALUE_8;
   IO_NEXTREG_DAT = 0x00;
   IO_NEXTREG_DAT = 0x20;
   IO_NEXTREG_DAT = 0x40;
   IO_NEXTREG_DAT = 0x60;
-  // Temp : fill with white so I can set a border colour other than black
-  for ( unsigned char l = 0; l < 125; l++)
-  {
-    IO_NEXTREG_DAT = 0xFF;    
-  }
+
+  // Set some colours for the border (for debugging purposes)
+  IO_NEXTREG_REG = REG_PALETTE_INDEX;
+  IO_NEXTREG_DAT = 128;
+  IO_NEXTREG_REG = REG_PALETTE_VALUE_8;
+  IO_NEXTREG_DAT = 0x00;      // border black
+  IO_NEXTREG_DAT = 0x01;      // border dark blue
 }
 
 bool loResLoadImage(char* filename)

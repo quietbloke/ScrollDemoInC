@@ -117,7 +117,6 @@ IM2_DEFINE_ISR_8080(isr)
 //  }
 
   // restore nextreg register
-    copperRun();
 
 //    Scroller_Update();
    
@@ -135,18 +134,18 @@ int main(void)
 
   loResSetInitPallete();
 
-  zx_border(INK_BLUE);
+//  zx_border(INK_BLUE);
 
   loResSetClipWindow ( 0, 255, 255, 255); // hide the bg 
 
   if ( !loResLoadImage("bg.bin"))
   {
-    zx_border(7);
+//    zx_border(7);
   }
 
   if ( !sprites_load_patterns("sprites.spr"))
   {
-    zx_border(7);
+//    zx_border(7);
   }
 
   CreateRustyPixelSprite();
@@ -183,7 +182,7 @@ int main(void)
     IO_NEXTREG_REG = REG_ACTIVE_VIDEO_LINE_L;
     while (IO_NEXTREG_DAT != 192);
 
-//    zx_border(INK_BLACK);
+    zx_border(INK_BLUE);
 
     Update();
     Render();
@@ -218,6 +217,8 @@ int main(void)
       loresAngleCos += 1;
     }
 
+    copperRun();
+
     if ( stage > 1)
     {
       set_sprite_pattern_index(0);
@@ -233,7 +234,7 @@ int main(void)
     }
     Scroller_Render();
 
-//    zx_border(INK_BLUE);
+    zx_border(INK_BLACK);
 
   }
 
@@ -254,7 +255,7 @@ static void Render()
 
 static void initialise()
 {
-  zx_border(INK_BLUE);
+//  zx_border(INK_BLUE);
 
   // Enable the lowres screen, show sprites
   IO_NEXTREG_REG = REG_SPRITE_LAYER_SYSTEM;
