@@ -63,6 +63,7 @@ void loResSetInitPallete()
   IO_NEXTREG_REG = REG_PALETTE_VALUE_8;
   IO_NEXTREG_DAT = 0x00;      // border black
   IO_NEXTREG_DAT = 0x01;      // border dark blue
+  IO_NEXTREG_DAT = 0x80;      // border dark red
 }
 
 bool loResLoadImage(char* filename)

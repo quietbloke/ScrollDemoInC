@@ -2,16 +2,17 @@
 
 #define COPPER_WAIT     0x80
 
-#define BAR_SIZE        16
-#define BAR_DELAY		5
+#define BAR_MAX_SIZE        16
+#define MAX_BARS            10
+#define BAR_FIRST_PAUSE     200
+#define BAR_NEXT_PAUSE      20
+#define BAR_MOVE_DELAY	    2
 
-unsigned char barPos = 10;
-unsigned char barPosIndex = 0;
-unsigned char barDelay = BAR_DELAY;
+unsigned char sectionLines[96];
 
 unsigned char barColours[] = 
 {
-    32,64,96,128,160,192,224,232, 232,224,192,160,128,96,64,32
+    32,64,96,128,160,192,224,232
 };
 
 unsigned char ColourBarSineData[] = {
@@ -49,6 +50,12 @@ unsigned char ColourBarSineData[] = {
     56 , 57 , 58 , 59 , 60 , 61 , 61 , 62,
 };
 
+unsigned char bars[MAX_BARS];
+
+unsigned char barPause = BAR_FIRST_PAUSE;
+unsigned char barCount = 0;
+unsigned char barMoveWait = 0;
+
 void ColourBars_Init()
 {
 
@@ -56,36 +63,131 @@ void ColourBars_Init()
 
 void ColourBars_Update()
 {
-    // wait till scanline 0;
-    IO_NEXTREG_DAT = COPPER_WAIT;
-    IO_NEXTREG_DAT = 130;
+    if ( barPause == 0)
+    {
+        barPause = BAR_NEXT_PAUSE;
+        if ( barCount < MAX_BARS)
+        {
+            bars[barCount] = 128+32;
+            barCount++;
+        }
+    }
+    else
+    {
+        barPause--;
+    }
 
-    //    IO_NEXTREG_DAT = REG_PALETTE_CONTROL;
-    //    IO_NEXTREG_DAT = RPC_SELECT_ULA_PALETTE_0;
+    for ( unsigned char idx=0; idx < barCount; idx++)
+    {
+        bars[idx]++;
+    }
+}
 
-    IO_NEXTREG_DAT = REG_PALETTE_INDEX;
-    IO_NEXTREG_DAT = 0x00;
-    IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-    IO_NEXTREG_DAT = 0x70;
+void barsDrawBar(unsigned char barNumber, unsigned char sectionLine)
+{
+    unsigned char barHalfHeight = 8 - (barNumber / 2);
+    unsigned char barFullHeight = barHalfHeight * 2;
+    unsigned char barColourIdx = 0;
+    unsigned char barLine = 0;
 
-    IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-    IO_NEXTREG_DAT = 0x70;
+    for ( barLine = 0; barLine < barHalfHeight; barLine++, barColourIdx++, sectionLine++)
+    {
+        sectionLines[sectionLine] = barColours[barColourIdx];
+    }
+    barColourIdx--;
+    for ( barLine = 0; barLine < barHalfHeight; barLine++, barColourIdx--, sectionLine++)
+    {
+        sectionLines[sectionLine] = barColours[barColourIdx];
+    }
+}
 
-    IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-    IO_NEXTREG_DAT = 0x70;
+void ColourBars_Build()
+{
+    // reset the sectionLines
+    for ( unsigned char i = 0; i < 96; i++)
+    {
+        sectionLines[i] = 0;
+    }
 
-    IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-    IO_NEXTREG_DAT = 0x70;
+//    if ( barMoveWait == 0)
+//    {
+        barMoveWait = BAR_MOVE_DELAY;
 
-    //
-    //
+//        if ( barCount < MAX_BARS)
+//        {
+//            barPause--;
+//            if ( barPause == 0)
+//            {
+//                barPause = BAR_NEXT_PAUSE;
+//                barCount++;
+//            }
+//        }
+//    }
+    if ( barCount > 0)
+    {
+        for( unsigned char barIdx = barCount-1; barIdx < 255; barIdx--)
+        {
+            barsDrawBar(barIdx, ColourBarSineData[bars[barIdx]]);
+        }
+    }
+//    barsDrawBar(0, 10);
+//    barsDrawBar(0, 30);
+}
 
-    IO_NEXTREG_DAT = COPPER_WAIT;
-    IO_NEXTREG_DAT = 140;
 
-    //    IO_NEXTREG_DAT = REG_PALETTE_CONTROL;
-    //    IO_NEXTREG_DAT = RPC_SELECT_ULA_PALETTE_0;
+void BarsRenderSection(unsigned char section)
+{
+    unsigned char screenScanLine = section * 32 + 32;
+    unsigned char sectionPos = section * 32;
+ 
+    for ( unsigned char sectionLine = 0; sectionLine < 32; sectionLine++, sectionPos++, screenScanLine++)
+    {
+        unsigned char colour = sectionLines[sectionPos]; 
 
+        if ( sectionLine != 0)
+        {
+            IO_NEXTREG_DAT = COPPER_WAIT;
+            IO_NEXTREG_DAT = screenScanLine;
+        }
+
+        if ( colour != 0)
+        {
+            IO_NEXTREG_DAT = REG_PALETTE_INDEX;
+            IO_NEXTREG_DAT = 0x00;
+            IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+            IO_NEXTREG_DAT = colour;
+
+            IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+            IO_NEXTREG_DAT = colour;
+
+            IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+            IO_NEXTREG_DAT = colour;
+
+            IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+            IO_NEXTREG_DAT = colour;
+        }
+        else
+        {
+            IO_NEXTREG_DAT = REG_PALETTE_INDEX;
+            IO_NEXTREG_DAT = 0x00;
+            IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+            IO_NEXTREG_DAT = 0x00;
+
+            IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+            IO_NEXTREG_DAT = 0x20;
+
+            IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+            IO_NEXTREG_DAT = 0x40;
+
+            IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+            IO_NEXTREG_DAT = 0x60;
+        }
+    }
+}
+
+
+void ColourBars_Update_Done()
+{
     IO_NEXTREG_DAT = REG_PALETTE_INDEX;
     IO_NEXTREG_DAT = 0x00;
     IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
@@ -99,89 +201,4 @@ void ColourBars_Update()
 
     IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
     IO_NEXTREG_DAT = 0x60;
-
-}
-
-void ColourBars_Update_Test(unsigned char section)
-{
-    // section 0 = screen position 0  - 31
-    // section 1 = screen position 32 - 63
-    // section 2 = screen position 64 - 95
-    // section 3 = screen position 96 - 127
-
-    barDelay--;
-    if ( barDelay == 0)
-    {
-        barDelay = BAR_DELAY;
-        barPosIndex++;
-    }
-
-    barPos = ColourBarSineData[barPosIndex]+32;
-
-    unsigned char sectionTop = section * 32;
-    unsigned char sectionBottom = sectionTop + 31;
-
-    unsigned char scanLine = sectionTop;
-    unsigned char barPosEnd = barPos + BAR_SIZE;
-
-    unsigned char prevBarColour = 255;
-    unsigned char barColour = 0;
-
-    for ( unsigned sectionLine = 0; sectionLine < 32; sectionLine++)
-    {
-        if (scanLine >= barPos && scanLine < barPosEnd)
-        {
-            unsigned char colourPos = scanLine - barPos;
-            barColour = barColours[colourPos];
-        }
-        else
-        {
-            barColour = 0;
-        }
-        
-        if ( barColour != prevBarColour)
-        {
-            if ( sectionLine != 0)
-            {
-                // wait till scanline 0;
-                IO_NEXTREG_DAT = COPPER_WAIT;
-                IO_NEXTREG_DAT = scanLine;
-            }
-
-            if (barColour != 0)
-            {
-                IO_NEXTREG_DAT = REG_PALETTE_INDEX;
-                IO_NEXTREG_DAT = 0x00;
-                IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-                IO_NEXTREG_DAT = barColour;
-
-                IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-                IO_NEXTREG_DAT = barColour;
-
-                IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-                IO_NEXTREG_DAT = barColour;
-
-                IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-                IO_NEXTREG_DAT = barColour;
-            }
-            else
-            {
-                IO_NEXTREG_DAT = REG_PALETTE_INDEX;
-                IO_NEXTREG_DAT = 0x00;
-                IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-                IO_NEXTREG_DAT = 0x00;
-
-                IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-                IO_NEXTREG_DAT = 0x20;
-
-                IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-                IO_NEXTREG_DAT = 0x40;
-
-                IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-                IO_NEXTREG_DAT = 0x60;
-            }
-            prevBarColour = barColour;
-        }
-        scanLine++;
-    }
 }

@@ -10,11 +10,17 @@
 #include <z80.h>
 #include <intrinsic.h>
 
+//#include "common.h"
 #include "lores.h"
 #include "sprite.h"
 #include "layer2.h"
 #include "copper.h"
 #include "scroller.h"
+#include "colourbars.h"
+
+unsigned char Layer2YClip = 160;            // y clip on layer2
+unsigned char Layer2YClipDelay	= 220;      // delay for base text to appear
+
 
 #define RUSTY_PIXEL_SPRITE 0
 static signed char sinOffsetX[] = {
@@ -101,12 +107,12 @@ static void CreateRustyPixelSprite();
 
 IM2_DEFINE_ISR_8080(isr)
 {
-     unsigned char save;
+  unsigned char save;
    
    // save nextreg register
 //    zx_border(INK_BLACK);
    
-   save = IO_NEXTREG_REG;
+  save = IO_NEXTREG_REG;
 
   // Temp code to slow things down.
 //  for ( char p =0; p < 2; p++)
@@ -127,8 +133,7 @@ IM2_DEFINE_ISR_8080(isr)
 
 int main(void)
 {
-  ZXN_WRITE_REG(REG_TURBO_MODE, 2);
-
+  ZXN_WRITE_REG(REG_TURBO_MODE, 3);
 
   initialise();
 
@@ -187,6 +192,22 @@ int main(void)
     Update();
     Render();
 
+  	ColourBars_Update();
+  	ColourBars_Build();
+
+//    zx_border(INK_RED);
+
+    // Layer2 Clip window
+    if (Layer2YClip != 191)
+    {
+      if ( Layer2YClipDelay > 1)
+      {
+        Layer2YClipDelay--;
+      }
+      Layer2YClip++;
+      layer2SetClipWindow(0, 255, 0, Layer2YClip);
+    }
+
     if ( stage == 0)
     {
       stage_counter++;
@@ -216,7 +237,6 @@ int main(void)
       loresAngleSin += 1;
       loresAngleCos += 1;
     }
-
     copperRun();
 
     if ( stage > 1)
@@ -263,6 +283,7 @@ static void initialise()
 
   layer2Initialise();
   layer2Clear(0xe3);
+  layer2SetClipWindow(0, 255, 0, Layer2YClip);
 
   layer2WriteText(2, 10, "SCROLLNUTTER");
   layer2WriteText(3, 11, "NEXT  DEMO");

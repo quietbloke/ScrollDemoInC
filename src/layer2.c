@@ -12,6 +12,16 @@
 void layer2WriteCharacter( unsigned char* charAddress, unsigned char* layer2Address, char character);
 void layer2WriteBigCharacter( unsigned char* charAddress, unsigned char* layer2Address, char character);
 
+void layer2SetClipWindow(unsigned char left, unsigned char right, unsigned char top, unsigned char bottom)
+{
+  IO_NEXTREG_REG = REG_CLIP_WINDOW_LAYER_2;
+  IO_NEXTREG_DAT = left;
+  IO_NEXTREG_DAT = right;
+  IO_NEXTREG_DAT = top;
+  IO_NEXTREG_DAT = bottom;
+
+}
+
 bool loadFont(char* filename, unsigned int startBank, unsigned char totalBanks)
 {
   uint8_t filehandle;
