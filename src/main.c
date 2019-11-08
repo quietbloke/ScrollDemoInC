@@ -10,7 +10,6 @@
 #include <z80.h>
 #include <intrinsic.h>
 
-//#include "common.h"
 #include "lores.h"
 #include "sprite.h"
 #include "layer2.h"
@@ -18,11 +17,14 @@
 #include "scroller.h"
 #include "colourbars.h"
 
-unsigned char Layer2YClip = 160;            // y clip on layer2
-unsigned char Layer2YClipDelay	= 220;      // delay for base text to appear
+unsigned char Layer2YClip         = 160;      // y clip on layer2
+unsigned int  Layer2YClipDelay	  = 220;      // delay for base text to appear
+unsigned char SpriteYClip         =  0;       // y clip on sprite layer
+unsigned int  SpriteYClipDelay	  = 720;      // delay for logo to appear
+unsigned int  LoResClipDelay      = 1550;     // delay for background to appear
+unsigned char LoResClip           = 0;        // loRes clip value
+unsigned int  ColourBarsDelay     = 2406;     // delay to trigger colour bars
 
-
-#define RUSTY_PIXEL_SPRITE 0
 static signed char sinOffsetX[] = {
 	1 , 1 , 2 , 2 , 3 , 4 , 4 , 5,
 	5 , 6 , 6 , 7 , 8 , 8 , 9 , 9,
@@ -98,21 +100,35 @@ unsigned char spriteAngleCos = 0;
 unsigned char stage = 0;
 unsigned char stage_counter = 0;
 
+unsigned char borderColour = 0;
+
 /* --------------------------------- */
 
 static void initialise();
 static void CreateRustyPixelSprite();
+static void SetBorder(unsigned char border);
 
 /* --------------------------------- */
 
 IM2_DEFINE_ISR_8080(isr)
 {
   unsigned char save;
+  unsigned char borderSave;
    
    // save nextreg register
-//    zx_border(INK_BLACK);
-   
   save = IO_NEXTREG_REG;
+  borderSave = borderColour;
+  SetBorder(INK_RED);
+
+  if ( ColourBarsDelay == 0 )
+  {
+    ColourBars_Update();
+    ColourBars_Build();
+  }
+  else
+  {
+    ColourBarsDelay--;
+  }
 
   // Temp code to slow things down.
 //  for ( char p =0; p < 2; p++)
@@ -124,11 +140,15 @@ IM2_DEFINE_ISR_8080(isr)
 
   // restore nextreg register
 
-//    Scroller_Update();
-   
   IO_NEXTREG_REG = save;
 
-//  zx_border(INK_BLUE);
+  SetBorder(borderSave);
+}
+
+void SetBorder(unsigned char border)
+{
+//  zx_border(border);
+  borderColour = border;
 }
 
 int main(void)
@@ -187,15 +207,10 @@ int main(void)
     IO_NEXTREG_REG = REG_ACTIVE_VIDEO_LINE_L;
     while (IO_NEXTREG_DAT != 192);
 
-    zx_border(INK_BLUE);
+    SetBorder(INK_BLUE);
 
     Update();
     Render();
-
-  	ColourBars_Update();
-  	ColourBars_Build();
-
-//    zx_border(INK_RED);
 
     // Layer2 Clip window
     if (Layer2YClip != 191)
@@ -204,58 +219,64 @@ int main(void)
       {
         Layer2YClipDelay--;
       }
-      Layer2YClip++;
-      layer2SetClipWindow(0, 255, 0, Layer2YClip);
-    }
-
-    if ( stage == 0)
-    {
-      stage_counter++;
-      if ( stage_counter == 30)
+      else
       {
-        stage++;
-        stage_counter = 0;
+        Layer2YClip++;
+        layer2SetClipWindow(0, 255, 0, Layer2YClip);
       }
     }
 
-    if ( stage == 1)
+    // Sprite Clip window
+    if (SpriteYClip != 191)
     {
-      loResSetClipWindow ( 0, 255, 0, stage_counter); // hide the bg 
-      stage_counter++;
-      if ( stage_counter == 196)
+      if ( SpriteYClipDelay > 1)
       {
-        stage++;
-        stage_counter = 0;
+        SpriteYClipDelay--;
+      }
+      else
+      {
+        SpriteYClip++;
+        SpriteSetClipWindow(0, 255, 0, SpriteYClip);
       }
     }
 
-    if ( stage > 0)
+    // Lowres Clip window
+    if (LoResClip != 191)
     {
-      Scroller_Update();
-      loResSetOffsetX(sinOffsetX[loresAngleSin]);
-      loResSetOffsetY(sinOffsetX[loresAngleCos]);
-      loresAngleSin += 1;
-      loresAngleCos += 1;
+      if ( LoResClipDelay > 1)
+      {
+        LoResClipDelay--;
+      }
+      else
+      {
+        LoResClip++;
+        loResSetClipWindow(0, 255, 0, LoResClip);
+      }
     }
+
+    // Sprite
+    set_sprite_pattern_index(0);
+    set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
+
+    spriteAngleSin += 1;
+    spriteAngleCos += 1;
+
+    if ( spriteAngleCos > 219)
+    {
+      spriteAngleCos = 0;
+    }
+
+    Scroller_Update();
+    loResSetOffsetX(sinOffsetX[loresAngleSin]);
+    loResSetOffsetY(sinOffsetX[loresAngleCos]);
+    loresAngleSin += 1;
+    loresAngleCos += 1;
+
     copperRun();
 
-    if ( stage > 1)
-    {
-      set_sprite_pattern_index(0);
-      set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
-
-      spriteAngleSin += 1;
-      spriteAngleCos += 1;
-
-      if ( spriteAngleCos > 219)
-      {
-        spriteAngleCos = 0;
-      }
-    }
     Scroller_Render();
 
-    zx_border(INK_BLACK);
-
+    SetBorder(INK_BLACK);
   }
 
   return 0;
@@ -284,17 +305,12 @@ static void initialise()
   layer2Initialise();
   layer2Clear(0xe3);
   layer2SetClipWindow(0, 255, 0, Layer2YClip);
+  SpriteSetClipWindow(0, 255, 0, SpriteYClip);
 
   layer2WriteText(2, 10, "SCROLLNUTTER");
   layer2WriteText(3, 11, "NEXT  DEMO");
 
   Scroller_Init();
-//  layer2WriteBigText(0, 0, "HELLO", fontBankStart);
-//  layer2WriteBigText(0, 1, "WORLD!", font2BankStart);
-//  layer2WriteBigText(0, 2, "FONT 3", font3BankStart);
-//  layer2WriteBigText(0, 3, "FONT 2", font2BankStart);
-//  layer2WriteBigText(0, 4, "FONT 1", fontBankStart);
-
   layer2Show();
 }
 

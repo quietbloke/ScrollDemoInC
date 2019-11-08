@@ -20,6 +20,15 @@ void enable_sprites()
   IO_NEXTREG_DAT = SPRITES_VISIBLE; 
 }
 
+void SpriteSetClipWindow(unsigned char left, unsigned char right, unsigned char top, unsigned char bottom)
+{
+  IO_NEXTREG_REG = REG_CLIP_WINDOW_SPRITES;
+  IO_NEXTREG_DAT = left;
+  IO_NEXTREG_DAT = right;
+  IO_NEXTREG_DAT = top;
+  IO_NEXTREG_DAT = bottom;
+}
+
 void set_sprite_pattern_index(uint8_t slot)
 {
   IO_SPRITE_SLOT = slot;

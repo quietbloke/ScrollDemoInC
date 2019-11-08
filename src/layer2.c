@@ -209,73 +209,11 @@ void layer2WriteBigCharacter( unsigned char* charAddress, unsigned char* layer2A
   }
 }
 
-void layer2WriteBigCharacterSlice( unsigned char xTile,  unsigned char yTile, unsigned char fontNumber, char character, unsigned char xOffset, unsigned char width)
-{
-  unsigned char xOffEnd = xOffset + width;
-
-  if ( xOffset > 31)
-  {
-    return;
-  }
-
-  if ( xOffEnd > 31)
-  {
-    xOffEnd = 31;
-  }
-
-  unsigned char bankOffset = yTile;
-
-  int saveMmuValue = ZXN_READ_MMU6();
-
-  ZXN_WRITE_MMU1(layer2BankStart + bankOffset );
-
-  unsigned char* fontaddress = (unsigned char *)0xc000;
-  unsigned char* layer2address = (unsigned char *)(0x2000 + (32 * xTile));
-
-  character -= 32;
-  unsigned char fontCharBankOffset = character / 8;
-
-  character = character & 0x07;
-
-  int fontBank = fontBankStart;
-
-  ZXN_WRITE_MMU6(fontBank+fontCharBankOffset);
-
-  fontaddress += character * 1024;
-  for ( unsigned int chary = 0; chary < 32; chary++)
-  {
-    for ( unsigned int charx = xOffset; charx <= xOffEnd; charx++)
-    {
-      unsigned char pixel = fontaddress[chary * 32 + charx];
-      layer2address[chary * 256 + charx] = pixel;
-    }
-  }
-
-  ZXN_WRITE_MMU6(saveMmuValue);
-  ZXN_WRITE_MMU1(255);
-
-}
-
-//void layer2WriteBigCharacterSliceFast( unsigned char xTile,  unsigned char yTile, unsigned char fontNumber, char character, unsigned char xOffset, unsigned char width)
 void layer2WriteBigCharacterSliceFast( Scroller* scroller)
 {
-  unsigned char xOffEnd = scroller->charXPos + scroller->scrollSize;
-
-//  if ( xOffset > 31)
-//  {
-//    return;
-//  }
-//
-//  if ( xOffEnd > 31)
-//  {
-//    xOffEnd = 31;
-//  }
-
-  unsigned char bankOffset = scroller->yTile;
-
   int saveMmuValue = ZXN_READ_MMU6();
 
-  ZXN_WRITE_MMU1(layer2BankStart + bankOffset );
+  ZXN_WRITE_MMU1(layer2BankStart + scroller->yTile );
 
   unsigned char* fontaddress = (unsigned char *)0xc000;
   unsigned char* layer2address = (unsigned char *)(0x2000 + (32 * scroller->xTile)) + scroller->charXPos;
@@ -298,8 +236,6 @@ void layer2WriteBigCharacterSliceFast( Scroller* scroller)
     {
       *layer2address++ = *fontaddress++;
     }
-//    fontaddress += 32 - scroller->scrollSize;
-//    layer2address += 256 - scroller->scrollSize;
     fontaddress += fontNextRow;
     layer2address += screenNextRow;
   }
