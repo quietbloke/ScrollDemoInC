@@ -230,14 +230,39 @@ void layer2WriteBigCharacterSliceFast( Scroller* scroller)
 
   fontaddress += character * 1024 + scroller->charXPos;
 
-  for ( unsigned int chary = 0; chary < 32; chary++)
+  if (scroller->scrollSize == 1)
   {
-    for ( unsigned int charx = 0; charx < scroller->scrollSize; charx++)
+    for ( unsigned int chary = 0; chary < 32; chary++)
     {
       *layer2address++ = *fontaddress++;
+      fontaddress += fontNextRow;
+      layer2address += screenNextRow;
     }
-    fontaddress += fontNextRow;
-    layer2address += screenNextRow;
+  }
+  if (scroller->scrollSize == 2)
+  {
+    for ( unsigned int chary = 0; chary < 32; chary++)
+    {
+      *layer2address++ = *fontaddress++;
+      *layer2address++ = *fontaddress++;
+
+      fontaddress += fontNextRow;
+      layer2address += screenNextRow;
+    }
+  }
+
+  if (scroller->scrollSize == 4)
+  {
+    for ( unsigned int chary = 0; chary < 32; chary++)
+    {
+      *layer2address++ = *fontaddress++;
+      *layer2address++ = *fontaddress++;
+      *layer2address++ = *fontaddress++;
+      *layer2address++ = *fontaddress++;
+
+      fontaddress += fontNextRow;
+      layer2address += screenNextRow;
+    }
   }
 
   ZXN_WRITE_MMU6(saveMmuValue);
