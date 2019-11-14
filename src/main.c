@@ -10,12 +10,17 @@
 #include <z80.h>
 #include <intrinsic.h>
 
+#include "defines.h"
 #include "lores.h"
 #include "sprite.h"
 #include "layer2.h"
 #include "copper.h"
 #include "scroller.h"
 #include "colourbars.h"
+#include "vt_sound.h"
+#include "music.h"
+
+extern uint8_t music_module[];
 
 unsigned char Layer2YClip         = 160;      // y clip on layer2
 unsigned int  Layer2YClipDelay	  = 220;      // delay for base text to appear
@@ -118,17 +123,25 @@ IM2_DEFINE_ISR_8080(isr)
    // save nextreg register
   save = IO_NEXTREG_REG;
   borderSave = borderColour;
-  SetBorder(INK_RED);
+  SetBorder(INK_WHITE);
 
-  if ( ColourBarsDelay == 0 )
-  {
-    ColourBars_Update();
-    ColourBars_Build();
-  }
-  else
-  {
-    ColourBarsDelay--;
-  }
+  // swap in the music bank
+//    ZXN_WRITE_MMU2(musicBankStart);
+//
+//   vt_play_isr();
+//
+  // swap it back out again
+//    ZXN_WRITE_MMU2(0xff);
+
+//  if ( ColourBarsDelay == 0 )
+//  {
+//    ColourBars_Update();
+//    ColourBars_Build();
+//  }
+//  else
+//  {
+//    ColourBarsDelay--;
+//  }
 
   // Temp code to slow things down.
 //  for ( char p =0; p < 2; p++)
@@ -147,16 +160,15 @@ IM2_DEFINE_ISR_8080(isr)
 
 void SetBorder(unsigned char border)
 {
-//  zx_border(border);
+  zx_border(border);
   borderColour = border;
 }
 
 int main(void)
 {
-  ZXN_WRITE_REG(REG_TURBO_MODE, 3);
+  ZXN_WRITE_REG(REG_TURBO_MODE, 2);
 
   initialise();
-
   loResSetInitPallete();
 
 //  zx_border(INK_BLUE);
@@ -190,6 +202,12 @@ int main(void)
   // NOTE : we need to move the code org to 0x8184 (zxpragma.inc)
   // because the interrupt table and code is in 0x8000 - 0x8183
 
+  loadMusic();
+
+  ZXN_WRITE_MMU2(musicBankStart);
+  vt_init(0x4000);
+  ZXN_WRITE_MMU2(0xff);
+
   im2_init((void *)0x8000);
   memset((void *)0x8000, 0x81, 257);
   z80_bpoke(0x8181, 0xc3);   // z80 JP instruction
@@ -205,12 +223,31 @@ int main(void)
 
     // REG_ACTIVE_VIDEO_LINE_H
     IO_NEXTREG_REG = REG_ACTIVE_VIDEO_LINE_L;
+    while (IO_NEXTREG_DAT != 182);
+
+    SetBorder(INK_GREEN);
+
+    ZXN_WRITE_MMU2(musicBankStart);
+    vt_play();
+    ZXN_WRITE_MMU2(0xff);
+
+    SetBorder(INK_BLACK);
     while (IO_NEXTREG_DAT != 192);
 
-    SetBorder(INK_BLUE);
+    SetBorder(INK_CYAN);
+    if ( ColourBarsDelay == 0 )
+    {
+      ColourBars_Update();
+      ColourBars_Build();
+    }
+    else
+    {
+      ColourBarsDelay--;
+    }
 
-    Update();
-    Render();
+    SetBorder(INK_MAGENTA);
+//    Update();
+//    Render();
 
     // Layer2 Clip window
     if (Layer2YClip != 191)
@@ -266,14 +303,18 @@ int main(void)
       spriteAngleCos = 0;
     }
 
+    SetBorder(INK_YELLOW);
     Scroller_Update();
     loResSetOffsetX(sinOffsetX[loresAngleSin]);
     loResSetOffsetY(sinOffsetX[loresAngleCos]);
     loresAngleSin += 1;
     loresAngleCos += 1;
 
+
+    SetBorder(INK_BLUE);
     copperRun();
 
+    SetBorder(INK_RED);
     Scroller_Render();
 
     SetBorder(INK_BLACK);

@@ -1,5 +1,5 @@
 #ifndef LAYER2_H
-#define LOWRES_H
+#define LAYER2_H
 
 #include "scroller.h"
 

@@ -9,4 +9,6 @@
 #define font3BankStart  40 // ( requires 8 banks)
 #define font4BankStart 48 //( requires 2 banks)
 
+#define musicBankStart  50  // 2 banks required for the music
+
 #endif
