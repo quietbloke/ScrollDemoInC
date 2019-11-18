@@ -5,3 +5,4 @@ sprites.spr
 zcc_opt.def
 .vscode/c_cpp_properties.json
 *.nxt
+scrolldemo.map

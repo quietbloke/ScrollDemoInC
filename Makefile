@@ -1,8 +1,6 @@
 APP := scrolldemo
 LIB := sdcc_iy
-SRC1 := src/main.c src/lores.c src/sprite.c src/layer2.c src/copper.c src/scroller.c src/colourbars.c src/PT3PROM.asm src/vt_demo_module.asm  src/vt_sound.asm
-SRC := src/main.c src/lores.c src/sprite.c src/layer2.c src/copper.c src/scroller.c src/colourbars.c src/music.c src/PT3PROM.asm src/vt_sound.asm  
-EMU1 := ../../tools/CSpect/CSpect.exe -zxnext -s14 -w4 -r  -60 -vsync -sound -mmc=./
+SRC := src/main.c src/lores.c src/sprite.c src/layer2.c src/copper.c src/scroller.c src/colourbars.c src/music.c Audio/PT3PROM.asm Audio/vt_sound.asm 
 EMU := ../../tools/CSpect/CSpect.exe -zxnext -s14 -w4 -r -vsync -mmc=./
 
 MAPGRABBER := ../../tools/MapGrabber 
@@ -29,6 +27,7 @@ $(APP).sna : $(SRC) $(GFXSRC)
 	$(MAPGRABBER) GFX/Font4 s16 nomap r0
 	mv GFX/Font4.nxt font4.nxt
 
+	cp Audio/music2.pt3 music.pt3
 
 
 
@@ -40,4 +39,5 @@ clean:
 	rm *.sna	
 	rm *.spr
 	rm *.nxt
+	rm *.pt3
 	

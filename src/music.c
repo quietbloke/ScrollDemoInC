@@ -14,7 +14,7 @@ bool loadMusic()
   uint8_t filehandle;
   errno = 0;
 
-  filehandle = esxdos_f_open("Music2.pt3", ESXDOS_MODE_R | ESXDOS_MODE_OE);
+  filehandle = esxdos_f_open("music.pt3", ESXDOS_MODE_R | ESXDOS_MODE_OE);
   if (errno)
   {
     return false;

@@ -122,7 +122,7 @@ void copperRun()
   unsigned char wibblePos = wibbleOffset;
   for ( unsigned char scanline = 160; scanline < 192; scanline++)
   {
-    // wait till scanline 160;
+    // wait till next scanline
     IO_NEXTREG_DAT = COPPER_WAIT;
     IO_NEXTREG_DAT = scanline;
 

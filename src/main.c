@@ -160,12 +160,13 @@ IM2_DEFINE_ISR_8080(isr)
 
 void SetBorder(unsigned char border)
 {
-  zx_border(border);
+//  zx_border(border);
   borderColour = border;
 }
 
 int main(void)
 {
+  zx_border(INK_BLACK);
   ZXN_WRITE_REG(REG_TURBO_MODE, 2);
 
   initialise();
