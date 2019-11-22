@@ -160,7 +160,7 @@ IM2_DEFINE_ISR_8080(isr)
 
 void SetBorder(unsigned char border)
 {
-//  zx_border(border);
+  zx_border(border);
   borderColour = border;
 }
 
