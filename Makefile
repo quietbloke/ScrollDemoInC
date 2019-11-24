@@ -1,14 +1,28 @@
 APP := scrolldemo
-LIB := sdcc_iy
-SRC := src/main.c src/lores.c src/sprite.c src/layer2.c src/copper.c src/scroller.c src/colourbars.c src/music.c src/dma.c Audio/PT3PROM.asm Audio/vt_sound.asm 
-EMU := ../../tools/CSpect/CSpect.exe -zxnext -s14 -w4 -r -vsync -mmc=./
+ECHO := echo
+FIND := find
 
+SRCDIR := src
+OBJDIR := obj
+LIB := sdcc_iy
+
+EMU := ../../tools/CSpect/CSpect.exe -zxnext -s14 -w4 -r -vsync -mmc=./
 MAPGRABBER := ../../tools/MapGrabber 
 GFXSRC := GFX/Bg.bmp GFX/Sprites.bmp
+GFXOBJECTS := obj/bg.bin obj/sprites.spr
 
-$(APP).sna : $(SRC) $(GFXSRC)
-	zcc +zxn -vn -m -startup=31 -clib=$(LIB) $(SRC) -o $(APP) -pragma-include:zpragma.inc -create-app -Cz"--sna"
+CSOURCES != find src -type f -name "*.c" | sort
+ASMSOURCES != find src -type f -name "*.asm" | sort
 
+COBJECTS = $(CSOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o) 
+
+$(APP).sna : $(COBJECTS) $(ASMOBJECTS) $(GFXOBJECTS)
+	zcc +zxn -vn -m -startup=31 -clib=$(LIB) $(COBJECTS) $(ASMSOURCES) -o $(APP) -pragma-include:zpragma.inc -create-app -Cz"--sna"
+
+$(OBJDIR)/%.o : $(SRCDIR)/%.c
+	zcc +zxn -vn -m -startup=31 -clib=$(LIB) $< -o $@ -c -pragma-include:zpragma.inc
+
+ $(GFXOBJECTS): $(GFXSRC)
 	$(MAPGRABBER) GFX/Bg b
 	mv GFX/bg.nxi bg.bin
 
@@ -29,15 +43,23 @@ $(APP).sna : $(SRC) $(GFXSRC)
 
 	cp Audio/music2.pt3 music.pt3
 
-
-
 run: $(APP).sna
 	$(EMU) $(APP).sna
 
 clean:
 	rm *.bin
+	rm *.map
 	rm *.sna	
 	rm *.spr
 	rm *.nxt
 	rm *.pt3
+	rm obj/*.o
+
+print:
+	@$(ECHO) "****** Make variables ******"
+	@$(ECHO) APP: $(APP)
+	@$(ECHO) Source C   : $(CSOURCES)
+	@$(ECHO) Source ASM : $(ASMSOURCES)
+	@$(ECHO) Objects C  : $(COBJECTS)
+	@$(ECHO) Objects ASM: $(ASMOBJECTS)
 	
