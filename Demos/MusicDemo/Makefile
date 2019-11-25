@@ -1,4 +1,4 @@
-APP := scrolldemo
+APP := musicdemo
 ECHO := echo
 FIND := find
 
@@ -6,11 +6,10 @@ SRCDIR := src
 OBJDIR := obj
 LIB := sdcc_iy
 
-EMU := ../../../tools/CSpect/CSpect.exe -zxnext -s14 -w4 -r -vsync -mmc=./
-MAPGRABBER := ../../../tools/MapGrabber 
-
-GFXSRC := GFX/Bg.bmp GFX/Sprites.bmp
-GFXOBJECTS := bg.bin sprites.spr
+EMU := ../../../../tools/CSpect/CSpect.exe -zxnext -s14 -w4 -r -vsync -mmc=./
+MAPGRABBER := ../../../../tools/MapGrabber 
+GFXSRC := 
+GFXOBJECTS := 
 
 AUDIOSRC := Audio/Music2.pt3
 AUDIOOBJECTS := music.pt3
@@ -26,7 +25,7 @@ $(APP).sna : $(COBJECTS) $(ASMOBJECTS) $(GFXOBJECTS) $(AUDIOOBJECTS)
 $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	zcc +zxn -vn -m -startup=31 -clib=$(LIB) $< -o $@ -c -pragma-include:zpragma.inc
 
-$(GFXOBJECTS): $(GFXSRC)
+ $(GFXOBJECTS): $(GFXSRC)
 	$(MAPGRABBER) GFX/Bg bitmap
 	mv GFX/bg.nxi bg.bin
 
@@ -46,7 +45,8 @@ $(GFXOBJECTS): $(GFXSRC)
 	mv GFX/Font4.nxt font4.nxt
 
  $(AUDIOOBJECTS): $(AUDIOSRC)
-	cp Audio/music2.pt3 music.pt3
+
+	cp Audio/Music2.pt3 music.pt3
 
 run: $(APP).sna
 	$(EMU) $(APP).sna
