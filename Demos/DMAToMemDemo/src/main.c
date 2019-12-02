@@ -102,7 +102,8 @@ static void Render()
 {
   if (useDMA) 
   {
-    TransferValueToMemoryDMA(clearColour, MEMORY_BLOCK_START_ADDRESS, MEMORY_BLOCK_SIZE * numberOfBlocks);
+//    TransferValueToMemoryDMA(clearColour, MEMORY_BLOCK_START_ADDRESS, MEMORY_BLOCK_SIZE * numberOfBlocks);
+    TransferValueToMemoryDMABtoA(clearColour, MEMORY_BLOCK_START_ADDRESS, MEMORY_BLOCK_SIZE * numberOfBlocks);
 //    TransferValueToMemoryDMA(0, MEMORY_BLOCK_START_ADDRESS + MEMORY_BLOCK_SIZE * numberOfBlocks, MEMORY_BLOCK_SIZE);
   }
   else
