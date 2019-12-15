@@ -15,9 +15,9 @@
 #define MEMORY_BLOCK_START_ADDRESS 0x2000
 
 unsigned char borderColour = 0;
-unsigned char clearColour = 1;
+
 bool useDMA = false;
-unsigned numberOfBlocks = 1;
+bool useFastCPU = false;
 
 unsigned char ballFrame = 0;
 unsigned char ballFramePause = 0;
@@ -81,26 +81,15 @@ static void Update()
     {
       useDMA = false;
     }
-    if (in_key_pressed(IN_KEY_SCANCODE_p) && clearColour == 0)
+    if (in_key_pressed(IN_KEY_SCANCODE_s))
     {
-      if ( numberOfBlocks < 10)
-      {
-        numberOfBlocks++;
-      }
+      useFastCPU = false;
     }
-    if (in_key_pressed(IN_KEY_SCANCODE_l) && clearColour == 0)
+    if (in_key_pressed(IN_KEY_SCANCODE_f))
     {
-      if ( numberOfBlocks > 1)
-      {
-        numberOfBlocks--;
-      }
+      useFastCPU = true;
     }
 
-    clearColour++;
-    if ( clearColour > 3)
-    {
-      clearColour = 0;
-    }
     ballFramePause++;
     if ( ballFramePause > 0)
     {
@@ -138,11 +127,18 @@ static void Render()
   set_sprite_pattern_index(0);
   if (useDMA) 
   {
-    TransferMemoryToSpriteIOPortDMA(MEMORY_BLOCK_START_ADDRESS + (256*9)*textureFrame, 256 * 9);
+    TransferMemoryToPortDMA(MEMORY_BLOCK_START_ADDRESS + (256*9)*textureFrame, 256 * 9, __IO_SPRITE_PATTERN);
   }
   else
   {
-    TransferMemoryToSpriteIOPortCPU(MEMORY_BLOCK_START_ADDRESS + (256*9)*textureFrame, 256 * 9);
+    if ( useFastCPU)
+    {
+      TransferMemoryToSpriteIOPortCPU(MEMORY_BLOCK_START_ADDRESS + (256*9)*textureFrame, 256 * 9);
+    }
+    else
+    {
+      TransferMemoryToPortCPU(MEMORY_BLOCK_START_ADDRESS + (256*9)*textureFrame, 256 * 9, __IO_SPRITE_PATTERN);
+    }
   }
 }
 
@@ -173,12 +169,16 @@ static void loResSetInitPallete()
 
 static void Initialise()
 {
+  char buff[100];
 //  zx_border(INK_BLUE);
 
   // Enable the lowres screen, show sprites
   IO_NEXTREG_REG = REG_SPRITE_LAYER_SYSTEM;
-  IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE | RSLS_LAYER_PRIORITY_LSU; 
-
+//  IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE | RSLS_LAYER_PRIORITY_LSU; 
+  IO_NEXTREG_DAT = RSLS_SPRITES_VISIBLE | RSLS_LAYER_PRIORITY_LSU; 
+  zx_cls(0);
+//  sprintf(buff, "Hello World");
+//  printf(buff, "Hello World");
 //  loResSetInitPallete();
 
   if ( !sprites_load_patterns())

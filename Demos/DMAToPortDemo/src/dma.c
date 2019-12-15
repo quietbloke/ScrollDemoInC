@@ -1,3 +1,4 @@
+#include <z80.h>
 #include <arch/zxn.h>
 
 void TransferMemoryToSpriteIOPortCPU(unsigned char* source, unsigned int length)
@@ -5,11 +6,21 @@ void TransferMemoryToSpriteIOPortCPU(unsigned char* source, unsigned int length)
   unsigned char* finalAddress = source + length;
   while( source < finalAddress)
   {
+//    z80_outp(__IO_SPRITE_PATTERN, *source++);
     IO_SPRITE_PATTERN = *source++;
   }
 }
 
-void TransferMemoryToSpriteIOPortDMA(unsigned char* source, unsigned int length)
+void TransferMemoryToPortCPU(unsigned char* source, unsigned int length, unsigned char port)
+{
+  unsigned char* finalAddress = source + length;
+  while( source < finalAddress)
+  {
+    z80_outp(port, *source++);
+  }
+}
+
+void TransferMemoryToPortDMA(unsigned char* source, unsigned int length, unsigned char port)
 {
   // Note : D_WR0 is defined as zero, however wiki page doc says the lower 2 bits must not be 00.
   // However WR0_TRANSFER has a value of 1, so you must always add this ??
@@ -38,7 +49,7 @@ void TransferMemoryToSpriteIOPortDMA(unsigned char* source, unsigned int length)
 
   // Set Port B Address ( and set the Continuous transfer mode)
   IO_DMA = D_WR4 + D_WR4_X2_B_START_L + D_WR4_CONT;
-  IO_DMA = __IO_SPRITE_PATTERN; 
+  IO_DMA = port; 
 
   IO_DMA = D_LOAD;
 

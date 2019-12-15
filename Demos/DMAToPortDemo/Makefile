@@ -24,7 +24,7 @@ $(APP).sna : $(COBJECTS) $(ASMOBJECTS) $(GFXOBJECTS) $(AUDIOOBJECTS)
 	zcc +zxn -vn -m -startup=31 -clib=$(LIB) $(COBJECTS) $(ASMSOURCES) -o $(APP) -pragma-include:zpragma.inc -create-app -Cz"--sna"
 
 $(OBJDIR)/%.o : $(SRCDIR)/%.c
-	zcc +zxn -vn -m -startup=31 -clib=$(LIB) $< -o $@ -c -pragma-include:zpragma.inc
+	zcc +zxn -vn -m -clib=sdcc_iy -startup=31 -clib=$(LIB) $< -o $@ -c -pragma-include:zpragma.inc
 
 $(GFXOBJECTS): $(GFXSRC)
 	$(MAPGRABBER) GFX/Balls01 spr s16 r0

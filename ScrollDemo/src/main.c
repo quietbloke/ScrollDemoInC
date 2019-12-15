@@ -235,17 +235,6 @@ int main(void)
     SetBorder(INK_BLACK);
     while (IO_NEXTREG_DAT != 192);
 
-    SetBorder(INK_CYAN);
-    if ( ColourBarsDelay == 0 )
-    {
-      ColourBars_Update();
-      ColourBars_Build();
-    }
-    else
-    {
-      ColourBarsDelay--;
-    }
-
     SetBorder(INK_MAGENTA);
 //    Update();
 //    Render();
@@ -296,6 +285,22 @@ int main(void)
     set_sprite_pattern_index(0);
     set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
 
+    SetBorder(INK_YELLOW);
+    Scroller_Update();
+    loResSetOffsetX(sinOffsetX[loresAngleSin]);
+    loResSetOffsetY(sinOffsetX[loresAngleCos]);
+    loresAngleSin += 1;
+    loresAngleCos += 1;
+
+    SetBorder(INK_BLUE);
+    copperRun();
+
+    SetBorder(INK_RED);
+    Scroller_Render();
+
+    /* code here can happen during screen rendering */
+    SetBorder(INK_CYAN);
+
     spriteAngleSin += 1;
     spriteAngleCos += 1;
 
@@ -304,19 +309,14 @@ int main(void)
       spriteAngleCos = 0;
     }
 
-    SetBorder(INK_YELLOW);
-    Scroller_Update();
-    loResSetOffsetX(sinOffsetX[loresAngleSin]);
-    loResSetOffsetY(sinOffsetX[loresAngleCos]);
-    loresAngleSin += 1;
-    loresAngleCos += 1;
-
-
-    SetBorder(INK_BLUE);
-    copperRun();
-
-    SetBorder(INK_RED);
-    Scroller_Render();
+    if ( ColourBarsDelay == 0 )
+    {
+      ColourBars_Update();
+    }
+    else
+    {
+      ColourBarsDelay--;
+    }
 
     SetBorder(INK_BLACK);
   }

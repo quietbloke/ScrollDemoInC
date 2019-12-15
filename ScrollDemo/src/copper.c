@@ -80,7 +80,7 @@ void copperRun()
   IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
   IO_NEXTREG_DAT = scroller->scrXPos;
 
-  BarsRenderSection(0);
+  ColourBars_Copper_Section(0);
 
   // wait till scanline 64 - second scroller;
   IO_NEXTREG_DAT = COPPER_WAIT;
@@ -92,7 +92,7 @@ void copperRun()
   IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
   IO_NEXTREG_DAT = scroller->scrXPos;
 
-  BarsRenderSection(1);
+  ColourBars_Copper_Section(1);
 
   // wait till scanline 96 - second scroller;
   IO_NEXTREG_DAT = COPPER_WAIT;
@@ -103,7 +103,7 @@ void copperRun()
   IO_NEXTREG_DAT = REG_LAYER_2_OFFSET_X;
   IO_NEXTREG_DAT = scroller->scrXPos;
 
-  BarsRenderSection(2);
+  ColourBars_Copper_Section(2);
 
   // wait till scanline 128 - second scroller;
   IO_NEXTREG_DAT = COPPER_WAIT;
@@ -117,7 +117,7 @@ void copperRun()
   IO_NEXTREG_DAT = REG_SPRITE_LAYER_SYSTEM;
   IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE | RSLS_LAYER_PRIORITY_SLU;
 
-  ColourBars_Update_Done();
+  ColourBars_Copper_Done();
 
   unsigned char wibblePos = wibbleOffset;
   for ( unsigned char scanline = 160; scanline < 192; scanline++)

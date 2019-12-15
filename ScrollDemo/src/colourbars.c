@@ -12,6 +12,13 @@
 #define BAR_COLOUR_FADE_PAUSE   10
 #define BAR_COLOUR_SET_NUM      5
 
+/* ---------------------------------- */
+
+static void ColourBars_Build();
+static void ColourBars_DrawBar(unsigned char barNumber, unsigned char sectionLine);
+
+/* ---------------------------------- */
+
 unsigned char sectionLines[96];
 
 unsigned char currentBarColours[] = {0,0,0,0,0,0,0}; // current colours
@@ -118,100 +125,80 @@ void ColourBars_Update()
   if ( colourPause > 0)
   {
     colourPause--;
-    return;
-  }
-
-  // if we are in the process of fading
-  if ( colourFadeMask > 0)
-  {
-    for(unsigned char c = 0; c < 7; c++)
-    {
-      // See if blue needs to change towards target
-      unsigned char newcolour = currentBarColours[c];
-
-      // blue component
-      unsigned char colour = currentBarColours[c] & 0x03;
-      unsigned char targetcolour = barColours[nextColourSet*7 + c] & 0x03;
-
-      if ( colour < targetcolour)
-      {
-        newcolour += 1;
-      }
-      if ( colour > targetcolour)
-      {
-        newcolour -= 1;
-      }
-
-      // green component
-      colour = currentBarColours[c] & 0x1c;
-      targetcolour = barColours[nextColourSet*7 + c] & 0x1c;
-
-      if ( colour < targetcolour)
-      {
-        newcolour += 4;
-      }
-      if ( colour > targetcolour)
-      {
-        newcolour -= 4;
-      }
-
-      // red component
-      colour = currentBarColours[c] & 0xe0;
-      targetcolour = barColours[nextColourSet*7 + c] & 0xe0;
-
-      if ( colour < targetcolour)
-      {
-        newcolour += 32;
-      }
-      if ( colour > targetcolour)
-      {
-        newcolour -= 32;
-      }
-
-      currentBarColours[c] = newcolour;
-    }
-    // set the colour fade mask
-    colourFadeMask--; // all 3 bits set
-    colourPause = BAR_COLOUR_FADE_PAUSE;
   }
   else
   {
-    // reset the fade mask
-    colourFadeMask = 7;
-    // select what the next colourset will be
-    nextColourSet++;
-    if ( nextColourSet >= BAR_COLOUR_SET_NUM)
+    // if we are in the process of fading
+    if ( colourFadeMask > 0)
     {
-      nextColourSet = 0;
+      for(unsigned char c = 0; c < 7; c++)
+      {
+        // See if blue needs to change towards target
+        unsigned char newcolour = currentBarColours[c];
+
+        // blue component
+        unsigned char colour = currentBarColours[c] & 0x03;
+        unsigned char targetcolour = barColours[nextColourSet*7 + c] & 0x03;
+
+        if ( colour < targetcolour)
+        {
+          newcolour += 1;
+        }
+        if ( colour > targetcolour)
+        {
+          newcolour -= 1;
+        }
+
+        // green component
+        colour = currentBarColours[c] & 0x1c;
+        targetcolour = barColours[nextColourSet*7 + c] & 0x1c;
+
+        if ( colour < targetcolour)
+        {
+          newcolour += 4;
+        }
+        if ( colour > targetcolour)
+        {
+          newcolour -= 4;
+        }
+
+        // red component
+        colour = currentBarColours[c] & 0xe0;
+        targetcolour = barColours[nextColourSet*7 + c] & 0xe0;
+
+        if ( colour < targetcolour)
+        {
+          newcolour += 32;
+        }
+        if ( colour > targetcolour)
+        {
+          newcolour -= 32;
+        }
+
+        currentBarColours[c] = newcolour;
+      }
+      // set the colour fade mask
+      colourFadeMask--; // all 3 bits set
+      colourPause = BAR_COLOUR_FADE_PAUSE;
     }
-    // wait a while with this colour set
-    colourPause = BAR_COLOUR_PAUSE;
+    else
+    {
+      // reset the fade mask
+      colourFadeMask = 7;
+      // select what the next colourset will be
+      nextColourSet++;
+      if ( nextColourSet >= BAR_COLOUR_SET_NUM)
+      {
+        nextColourSet = 0;
+      }
+      // wait a while with this colour set
+      colourPause = BAR_COLOUR_PAUSE;
+    }
   }
+  ColourBars_Build();
 }
 
-void barsDrawBar(unsigned char barNumber, unsigned char sectionLine)
-{
-  unsigned char barHalfHeight = 7 - (barNumber / 2);
-  unsigned char barFullHeight = barHalfHeight * 2;
-  unsigned char* barColourPtr = currentBarColours;
-  unsigned char barLine = 0;
-
-  unsigned char* sectionLinePtr = &sectionLines[sectionLine]; 
-  sectionLinePtr += (barNumber/2);
-
-  for ( barLine = 0; barLine < barHalfHeight; barLine++, barColourPtr++, sectionLinePtr++)
-  {
-    *sectionLinePtr = *barColourPtr;
-  }
-
-  barColourPtr--;
-  for ( barLine = 0; barLine < barHalfHeight; barLine++, barColourPtr--, sectionLinePtr++)
-  {
-    *sectionLinePtr = *barColourPtr;
-  }
-}
-
-void ColourBars_Build()
+static void ColourBars_Build()
 {
   // reset the sectionLines
   TransferValueToMemory(0, sectionLines, 96);
@@ -220,12 +207,12 @@ void ColourBars_Build()
   {
     for( unsigned char barIdx = barCount-1; barIdx < 255; barIdx--)
     {
-      barsDrawBar(barIdx, ColourBarSineData[bars[barIdx]]);
+      ColourBars_DrawBar(barIdx, ColourBarSineData[bars[barIdx]]);
     }
   }
 }
 
-void BarsRenderSection(unsigned char section)
+void ColourBars_Copper_Section(unsigned char section)
 {
   unsigned char screenScanLine    = section * 32 + 32;
   unsigned char *sectionPos       = &sectionLines[0] + section * 32;
@@ -310,7 +297,7 @@ void BarsRenderSection(unsigned char section)
   }
 }
 
-void ColourBars_Update_Done()
+void ColourBars_Copper_Done()
 {
   IO_NEXTREG_DAT = REG_PALETTE_INDEX;
   IO_NEXTREG_DAT = 0x00;
@@ -325,4 +312,26 @@ void ColourBars_Update_Done()
 
   IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
   IO_NEXTREG_DAT = 0x60;
+}
+
+static void ColourBars_DrawBar(unsigned char barNumber, unsigned char sectionLine)
+{
+  unsigned char barHalfHeight = 7 - (barNumber / 2);
+  unsigned char barFullHeight = barHalfHeight * 2;
+  unsigned char* barColourPtr = currentBarColours;
+  unsigned char barLine = 0;
+
+  unsigned char* sectionLinePtr = &sectionLines[sectionLine]; 
+  sectionLinePtr += (barNumber/2);
+
+  for ( barLine = 0; barLine < barHalfHeight; barLine++, barColourPtr++, sectionLinePtr++)
+  {
+    *sectionLinePtr = *barColourPtr;
+  }
+
+  barColourPtr--;
+  for ( barLine = 0; barLine < barHalfHeight; barLine++, barColourPtr--, sectionLinePtr++)
+  {
+    *sectionLinePtr = *barColourPtr;
+  }
 }

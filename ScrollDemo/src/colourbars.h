@@ -4,12 +4,10 @@
 void ColourBars_Init();
 void ColourBars_Update();
 
-void ColourBars_Build();
-void BarsRenderSection(unsigned char section);
+void ColourBars_Copper_Section(unsigned char section);
 
 
-void ColourBars_Update_Done();
-void ColourBars_Render(unsigned char barSection);
+void ColourBars_Copper_Done();
 
 
 #endif
