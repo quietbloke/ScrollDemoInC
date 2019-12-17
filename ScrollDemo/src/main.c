@@ -112,6 +112,8 @@ unsigned char borderColour = 0;
 static void initialise();
 static void CreateRustyPixelSprite();
 static void SetBorder(unsigned char border);
+static void Update();
+static void UpdateHW();
 
 /* --------------------------------- */
 
@@ -123,33 +125,23 @@ IM2_DEFINE_ISR_8080(isr)
    // save nextreg register
   save = IO_NEXTREG_REG;
   borderSave = borderColour;
-  SetBorder(INK_WHITE);
+  SetBorder(INK_MAGENTA);
 
   // swap in the music bank
-//    ZXN_WRITE_MMU2(musicBankStart);
-//
-//   vt_play_isr();
-//
-  // swap it back out again
-//    ZXN_WRITE_MMU2(0xff);
+  ZXN_WRITE_MMU2(musicBankStart);
 
-//  if ( ColourBarsDelay == 0 )
-//  {
-//    ColourBars_Update();
-//    ColourBars_Build();
-//  }
-//  else
-//  {
-//    ColourBarsDelay--;
-//  }
+  vt_play_isr();
+
+  // swap it back out again
+  ZXN_WRITE_MMU2(0xff);
 
   // Temp code to slow things down.
-//  for ( char p =0; p < 2; p++)
-//  {
-//    unsigned int x = rand()%128;
-//    unsigned int y = rand()%96;
-//    loResPlot(x, y, x);
-//  }
+  // for ( char p =0; p < 7; p++)
+  // {
+  //   unsigned int x = rand()%128;
+  //   unsigned int y = rand()%96;
+  //   loResPlot(x, y, x);
+  // }
 
   // restore nextreg register
 
@@ -220,103 +212,25 @@ int main(void)
   // keep going till space key is pressed
   while(!in_key_pressed(IN_KEY_SCANCODE_SPACE) )
   {
-    // wait until line 192 is active
-
     // REG_ACTIVE_VIDEO_LINE_H
+    // For now the music playing happens just before we have reached end of screen rendering 
     IO_NEXTREG_REG = REG_ACTIVE_VIDEO_LINE_L;
-    while (IO_NEXTREG_DAT != 182);
+//    while (IO_NEXTREG_DAT != 182);
 
-    SetBorder(INK_GREEN);
+//    SetBorder(INK_GREEN);
 
-    ZXN_WRITE_MMU2(musicBankStart);
-    vt_play();
-    ZXN_WRITE_MMU2(0xff);
+//    ZXN_WRITE_MMU2(musicBankStart);
+//    vt_play();
+//    ZXN_WRITE_MMU2(0xff);
 
     SetBorder(INK_BLACK);
+
+    // wait until line 192 is active
     while (IO_NEXTREG_DAT != 192);
 
-    SetBorder(INK_MAGENTA);
-//    Update();
-//    Render();
+    UpdateHW();
 
-    // Layer2 Clip window
-    if (Layer2YClip != 191)
-    {
-      if ( Layer2YClipDelay > 1)
-      {
-        Layer2YClipDelay--;
-      }
-      else
-      {
-        Layer2YClip++;
-        layer2SetClipWindow(0, 255, 0, Layer2YClip);
-      }
-    }
-
-    // Sprite Clip window
-    if (SpriteYClip != 191)
-    {
-      if ( SpriteYClipDelay > 1)
-      {
-        SpriteYClipDelay--;
-      }
-      else
-      {
-        SpriteYClip++;
-        SpriteSetClipWindow(0, 255, 0, SpriteYClip);
-      }
-    }
-
-    // Lowres Clip window
-    if (LoResClip != 191)
-    {
-      if ( LoResClipDelay > 1)
-      {
-        LoResClipDelay--;
-      }
-      else
-      {
-        LoResClip++;
-        loResSetClipWindow(0, 255, 0, LoResClip);
-      }
-    }
-
-    // Sprite
-    set_sprite_pattern_index(0);
-    set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
-
-    SetBorder(INK_YELLOW);
-    Scroller_Update();
-    loResSetOffsetX(sinOffsetX[loresAngleSin]);
-    loResSetOffsetY(sinOffsetX[loresAngleCos]);
-    loresAngleSin += 1;
-    loresAngleCos += 1;
-
-    SetBorder(INK_BLUE);
-    copperRun();
-
-    SetBorder(INK_RED);
-    Scroller_Render();
-
-    /* code here can happen during screen rendering */
-    SetBorder(INK_CYAN);
-
-    spriteAngleSin += 1;
-    spriteAngleCos += 1;
-
-    if ( spriteAngleCos > 219)
-    {
-      spriteAngleCos = 0;
-    }
-
-    if ( ColourBarsDelay == 0 )
-    {
-      ColourBars_Update();
-    }
-    else
-    {
-      ColourBarsDelay--;
-    }
+    Update();
 
     SetBorder(INK_BLACK);
   }
@@ -328,18 +242,100 @@ int main(void)
 
 static void Update()
 {
+  SetBorder(INK_WHITE);
+  spriteAngleSin += 1;
+  spriteAngleCos += 1;
 
+  if ( spriteAngleCos > 219)
+  {
+    spriteAngleCos = 0;
+  }
+
+  if ( ColourBarsDelay == 0 )
+  {
+    ColourBars_Update();
+  }
+  else
+  {
+    ColourBarsDelay--;
+  }
+
+  loresAngleSin += 1;
+  loresAngleCos += 1;
+
+  // Layer2 Clip window
+  if (Layer2YClip != 191)
+  {
+    if ( Layer2YClipDelay > 1)
+    {
+      Layer2YClipDelay--;
+    }
+    else
+    {
+      Layer2YClip++;
+    }
+  }
+
+  // Sprite Clip window
+  if (SpriteYClip != 191)
+  {
+    if ( SpriteYClipDelay > 1)
+    {
+      SpriteYClipDelay--;
+    }
+    else
+    {
+      SpriteYClip++;
+      SpriteSetClipWindow(0, 255, 0, SpriteYClip);
+    }
+  }
+
+  // Lowres Clip window
+  if (LoResClip != 191)
+  {
+    if ( LoResClipDelay > 1)
+    {
+      LoResClipDelay--;
+    }
+    else
+    {
+      LoResClip++;
+    }
+  }
+
+  Scroller_Update();
+  SetBorder(INK_BLACK);
 }
 
-static void Render()
+static void UpdateHW()
 {
+   SetBorder(INK_BLUE);
 
+  layer2SetClipWindow(0, 255, 0, Layer2YClip);
+
+  if ( LoResClip != 0)
+  {
+    loResSetClipWindow(0, 255, 0, LoResClip);
+  }
+
+  loResSetOffsetX(sinOffsetX[loresAngleSin]);
+  loResSetOffsetY(sinOffsetX[loresAngleCos]);
+
+  set_sprite_pattern_index(0);
+  set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
+
+  SetBorder(INK_GREEN);
+  copperRun();
+
+  // plotting the verticals of the scrollers are last as they can be done
+  // just in time while the screen is rendering
+  SetBorder(INK_YELLOW);
+  Scroller_Render();
+  SetBorder(INK_BLACK);
 }
 
 static void initialise()
 {
-//  zx_border(INK_BLUE);
-
   // Enable the lowres screen, show sprites
   IO_NEXTREG_REG = REG_SPRITE_LAYER_SYSTEM;
   IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE | RSLS_LAYER_PRIORITY_LSU; 
