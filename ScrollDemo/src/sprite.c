@@ -8,11 +8,14 @@
 #include <errno.h>
 #include <arch/zxn/esxdos.h>
 
+#include "defines.h"
 #include "sprite.h"
 
 #define SPRITES_VISIBLE            1
 #define SPRITES_OVER_BORDER        2
 #define SPRITES_ENABLE_CLIPPING    16
+
+bool load_ball_textures_to_memory(char* filename, unsigned int startBank, unsigned char totalBanks);
 
 void enable_sprites()
 {
@@ -95,6 +98,47 @@ bool sprites_load_patterns(char* filename)
   }
 
   esxdos_f_close(filehandle);
+
+  return true;
+}
+
+bool sprites_load_ball_patterns()
+{
+  load_ball_textures_to_memory("balls01.spr", ballsBank1Start, 1);
+  load_ball_textures_to_memory("balls02.spr", ballsBank2Start, 1);
+
+  return true;
+}
+
+bool load_ball_textures_to_memory(char* filename, unsigned int startBank, unsigned char totalBanks)
+{
+  uint8_t filehandle;
+  errno = 0;
+
+//  int saveBank7 = ZXN_READ_MMU0();
+
+  filehandle = esxdos_f_open(filename, ESXDOS_MODE_R | ESXDOS_MODE_OE);
+  if (errno)
+  {
+    return false;
+  }
+
+  for (unsigned char bankIndex = 0; bankIndex <= totalBanks; bankIndex++)
+  {
+    unsigned char* destination = 0x2000;
+    ZXN_WRITE_MMU1(startBank + bankIndex);
+
+    esxdos_f_read(filehandle, (void *) destination, 1024*8);
+    if (errno)
+    {
+      return false;
+    }
+  }
+
+  esxdos_f_close(filehandle);
+
+  // put back the main memory
+  ZXN_WRITE_MMU1(0xff);
 
   return true;
 }

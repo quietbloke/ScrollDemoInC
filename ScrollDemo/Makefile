@@ -9,8 +9,8 @@ LIB := sdcc_iy
 EMU := ../../../tools/CSpect/CSpect.exe -zxnext -s14 -w4 -r -vsync -mmc=./
 MAPGRABBER := ../../../tools/MapGrabber 
 
-GFXSRC := GFX/Bg.bmp GFX/Sprites.bmp
-GFXOBJECTS := bg.bin sprites.spr
+GFXSRC := GFX/Bg.bmp GFX/Sprites.bmp GFX/Balls01.bmp GFX/Balls02.bmp
+GFXOBJECTS := bg.bin sprites.spr balls01.spr balls02.spr
 
 AUDIOSRC := Audio/Music2.pt3
 AUDIOOBJECTS := music.pt3
@@ -45,7 +45,13 @@ $(GFXOBJECTS): $(GFXSRC)
 	$(MAPGRABBER) GFX/Font4 s16 nomap r0
 	mv GFX/Font4.nxt font4.nxt
 
- $(AUDIOOBJECTS): $(AUDIOSRC)
+	$(MAPGRABBER) GFX/Balls01 spr s16 r0
+	mv GFX/Balls01.spr balls01.spr
+
+	$(MAPGRABBER) GFX/Balls02 spr s16 r0
+	mv GFX/Balls02.spr balls02.spr
+
+$(AUDIOOBJECTS): $(AUDIOSRC)
 	cp Audio/music2.pt3 music.pt3
 
 run: $(APP).sna
