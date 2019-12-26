@@ -26,18 +26,24 @@
 
 extern uint8_t music_module[];
 
-unsigned char Layer2YClip         = 160;      // y clip on layer2
-unsigned int  Layer2YClipDelay	  = 220;      // delay for base text to appear
-unsigned char SpriteYClip         =  0;       // y clip on sprite layer
-unsigned int  SpriteYClipDelay	  = 720;      // delay for logo to appear
-unsigned int  LoResClipDelay      = 1550;     // delay for background to appear
-unsigned char LoResClip           = 0;        // loRes clip value
-unsigned int  ColourBarsDelay     = 2406;     // delay to trigger colour bars
+uint8_t   Layer2YClip         = 160;      // y clip on layer2
+uint16_t  Layer2YClipDelay	  = 220;      // delay for base text to appear
+uint8_t   SpriteYClip         =  0;       // y clip on sprite layer
+uint16_t  SpriteYClipDelay	  = 720;      // delay for logo to appear
+uint16_t  LoResClipDelay      = 1550;     // delay for background to appear
+uint8_t   LoResClip           = 0;        // loRes clip value
+uint16_t  ColourBarsDelay     = 2406;     // delay to trigger colour bars
 
-unsigned char ballFrame = 0;
-unsigned char ballFramePause = 0;
+uint8_t ballFrame = 0;
+uint8_t ballFramePause = 0;
 
-static signed char sinOffsetX[] = {
+uint8_t spriteIndex = 0; // index of next available sprite to allocate
+
+uint8_t rustyAnchorSprite = 0;
+//uint8_t ballAnchorSpriteBack = 0;
+//uint8_t ballAnchorSpriteFront = 0;
+
+static int8_t sinOffsetX[] = {
 	1 , 1 , 2 , 2 , 3 , 4 , 4 , 5,
 	5 , 6 , 6 , 7 , 8 , 8 , 9 , 9,
 	10 , 10 , 11 , 11 , 12 , 12 , 13 , 13,
@@ -72,7 +78,7 @@ static signed char sinOffsetX[] = {
 	-4 ,-4 ,-3 ,-2 ,-2 ,-1 ,-1 , 0
 };
 
-static signed char sinOffsetY[] = {
+static int8_t sinOffsetY[] = {
 	 1 , 1 , 2 , 3 , 3 , 4 , 5 , 5,
 	 6 , 7 , 7 , 8 , 9 , 9 , 10 , 11,
 	 11 , 12 , 12 , 13 , 14 , 14 , 15 , 15,
@@ -103,23 +109,37 @@ static signed char sinOffsetY[] = {
 	-2 ,-1 ,-1 , 0
 };
 
-unsigned char loresAngleSin = 0;
-unsigned char loresAngleCos = 64;
+uint8_t loresAngleSin = 0;
+uint8_t loresAngleCos = 64;
 
-unsigned char spriteAngleSin = 0;
-unsigned char spriteAngleCos = 0;
+uint8_t spriteAngleSin = 0;
+uint8_t spriteAngleCos = 0;
 
-unsigned char stage = 0;
-unsigned char stage_counter = 0;
+uint8_t stage = 0;
+uint8_t stage_counter = 0;
 
-unsigned char borderColour = 0;
+uint8_t borderColour = 0;
+
+
+#define MAX_BALLS   2
+typedef struct BallSprite
+{
+  uint16_t  visibleDelay;
+  uint8_t   ballAnchorSprite;
+  uint16_t  xPos;
+  int8_t    xVel;
+  uint8_t   yPos;     // ypos is actually a fixed float, 8 bits int, 8 bits fraction
+  int8_t    yVel;     // the velocity will be -32 to +32, but we will use yVel / 8 when updating the yPos
+} BallSprite;
+
+BallSprite ballSprites[MAX_BALLS * 2]; // we need two ball sprites per ball, 1 behind and 1 in front of the rusty sprite
 
 /* --------------------------------- */
 
 static void initialise();
-static void CreateRustyPixelSprite();
-static void CreateBallSprite();
-static void SetBorder(unsigned char border);
+static uint8_t CreateRustyPixelSprite();
+static uint8_t CreateBallSprite();
+static void SetBorder(uint8_t border);
 static void Update();
 static void UpdateHW();
 static void RenderBall();
@@ -128,8 +148,8 @@ static void RenderBall();
 
 IM2_DEFINE_ISR_8080(isr)
 {
-  unsigned char save;
-  unsigned char borderSave;
+  uint8_t save;
+  uint8_t borderSave;
    
    // save nextreg register
   save = IO_NEXTREG_REG;
@@ -137,12 +157,12 @@ IM2_DEFINE_ISR_8080(isr)
   SetBorder(INK_MAGENTA);
 
   // swap in the music bank
-//  ZXN_WRITE_MMU2(musicBankStart);
+  ZXN_WRITE_MMU2(musicBankStart);
 
-//  vt_play_isr();
+  vt_play_isr();
 
   // swap it back out again
-//  ZXN_WRITE_MMU2(0xff);
+  ZXN_WRITE_MMU2(0xff);
 
   // Temp code to slow things down.
   // for ( char p =0; p < 7; p++)
@@ -161,14 +181,14 @@ IM2_DEFINE_ISR_8080(isr)
 
 void SetBorder(unsigned char border)
 {
-  zx_border(border);
+//  zx_border(border);
   borderColour = border;
 }
 
 int main(void)
 {
   zx_border(INK_BLACK);
-  ZXN_WRITE_REG(REG_TURBO_MODE, 3);
+  ZXN_WRITE_REG(REG_TURBO_MODE, 2);
 
   initialise();
   loResSetInitPallete();
@@ -185,27 +205,37 @@ int main(void)
 
   if ( !sprites_load_ball_patterns())
   {
-//    zx_border(7);
+  //    zx_border(7);
   }
 
   if ( !sprites_load_patterns("sprites.spr"))
   {
-//    zx_border(7);
+  //    zx_border(7);
   }
 
-//  CreateRustyPixelSprite();
+  //  CreateRustyPixelSprite();
 
   // Draw the 4 rounded corner sprites
-  set_sprite(32,32+192-16, 32);
-  set_sprite(32+256-16,32+192-16, 33);
-  set_sprite(32, 32, 34);
-  set_sprite(32+256-16, 32, 35);
+  set_sprite(32,32+192-16, 32, true);
+  set_sprite(32+256-16,32+192-16, 33, true);
+  set_sprite(32, 32, 34, true);
+  set_sprite(32+256-16, 32, 35, true);
+  spriteIndex += 4;
+
+  for ( uint8_t ballIndex = 0;  ballIndex < MAX_BALLS; ballIndex++)
+  {
+    BallSprite* ballSprite = &ballSprites[ballIndex];
+
+    ballSprite->ballAnchorSprite = CreateBallSprite();
+  }
+
+  rustyAnchorSprite = CreateRustyPixelSprite();
 
   loResSetOffsetX(sinOffsetX[loresAngleSin]);
   loResSetOffsetY(sinOffsetX[loresAngleCos]);
 
-//  set_sprite_pattern_index(0);
-//  set_sprite(255, 255, 0);
+  //  set_sprite_pattern_index(0);
+  //  set_sprite(255, 255, 0);
 
   // NOTE : we need to move the code org to 0x8184 (zxpragma.inc)
   // because the interrupt table and code is in 0x8000 - 0x8183
@@ -222,7 +252,7 @@ int main(void)
   z80_wpoke(0x8182, (unsigned int)isr);
 
   // enable interrupts
-  intrinsic_ei();
+//  intrinsic_ei();
 
   // keep going till space key is pressed
   while(!in_key_pressed(IN_KEY_SCANCODE_SPACE) )
@@ -234,9 +264,9 @@ int main(void)
 
     SetBorder(INK_GREEN);
 
-    ZXN_WRITE_MMU2(musicBankStart);
-    vt_play();
-    ZXN_WRITE_MMU2(0xff);
+//    ZXN_WRITE_MMU2(musicBankStart);
+//    vt_play();
+//    ZXN_WRITE_MMU2(0xff);
 
     SetBorder(INK_BLACK);
 
@@ -258,6 +288,34 @@ int main(void)
 static void Update()
 {
   SetBorder(INK_WHITE);
+
+  for ( uint8_t ballIndex = 0;  ballIndex < MAX_BALLS; ballIndex++)
+  {
+    BallSprite* ballSprite = &ballSprites[ballIndex];
+    if ( ballSprite->visibleDelay == 0)
+    {
+      ballSprite->xPos += ballSprite->xVel;
+      if (ballSprite->xPos > 255 || ballSprite->xPos < 48)
+      {
+        ballSprite->xVel = -ballSprite->xVel;
+      }
+
+      if ( ballSprite->yVel < 29 )
+      {
+        ballSprite->yVel += 1;
+      }
+      ballSprite->yPos += ballSprite->yVel >> 2;
+      if ( ballSprite->yPos > 192-32)
+      {
+        ballSprite->yPos = 192-32;
+        ballSprite->yVel = -ballSprite->yVel;
+      }
+    }
+    else
+    {
+      ballSprite->visibleDelay--;
+    }
+  }
 
   if ( ColourBarsDelay == 0 )
   {
@@ -352,27 +410,56 @@ static void UpdateHW()
   loResSetOffsetX(sinOffsetX[loresAngleSin]);
   loResSetOffsetY(sinOffsetX[loresAngleCos]);
 
-//  set_sprite_pattern_index(4);
-//  set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
+  //  set_sprite_pattern_index(4);
+  //  set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
 
   SetBorder(INK_GREEN);
   copperRun();
 
+  SetBorder(INK_RED);
+  RenderBall();
+
+  SetBorder(INK_CYAN);
+  for ( uint8_t ballIndex = 0;  ballIndex < MAX_BALLS; ballIndex++)
+  {
+    BallSprite* ballSprite = &ballSprites[ballIndex];
+    if ( ballSprite->visibleDelay == 0)
+    {
+      set_sprite_pattern_index(ballSprite->ballAnchorSprite);
+      set_sprite(ballSprite->xPos, ballSprite->yPos, 52, true);
+    }
+  }
+  //  CreateRustyPixelSprite();
+  //  CreateBallSprite();
+
+//  set_sprite_pattern_index(ballAnchorSpriteBack);
+//  set_sprite(32, 32, 36);
+
+  set_sprite_pattern_index(rustyAnchorSprite);
+  set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0, true);
+
+//  set_sprite_pattern_index(ballAnchorSpriteFront);
+//  set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
+//  set_sprite(92, 32, 36);
   // plotting the verticals of the scrollers are last as they can be done
   // just in time while the screen is rendering
   SetBorder(INK_YELLOW);
   Scroller_Render();
 
-  SetBorder(INK_RED);
-  RenderBall();
-  CreateRustyPixelSprite();
-  CreateBallSprite();
-  
   SetBorder(INK_BLACK);
 }
 
 static void initialise()
 {
+  for( uint8_t ballIndex = 0; ballIndex < MAX_BALLS; ballIndex++)
+  {
+    BallSprite* ballSprite = &ballSprites[ballIndex];
+    ballSprite->visibleDelay = 0x1df6 + ballIndex * 0x06fa;
+    ballSprite->xPos = 64;
+    ballSprite->yPos = 0;
+    ballSprite->xVel = 1;
+  }
+
   // Enable the lowres screen, show sprites
   IO_NEXTREG_REG = REG_SPRITE_LAYER_SYSTEM;
   IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_SPRITES_VISIBLE | RSLS_LAYER_PRIORITY_LSU; 
@@ -390,7 +477,7 @@ static void initialise()
 }
 
 // 32 sprites have up the rusty pixel sprite
-signed char childPixelSprites[] = {
+int8_t childPixelSprites[] = {
      1,0, 2,0, 3,0,
      0,1, 1,1, 2,1, 3,1,
      0,2, 1,2, 2,2, 3,2,
@@ -398,45 +485,56 @@ signed char childPixelSprites[] = {
      0,4, 1,4, 2,4, 3,4,
     -1,5, 0,5, 1,5, 2,5, 3,5, 4,5,
     -1,6, 0,6, 1,6, 2,6, 3,6, 4,6
-  };
+};
   
-static void CreateRustyPixelSprite()
+uint8_t CreateRustyPixelSprite()
 {
-  set_sprite_pattern_index(4);
-  set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
+  uint8_t anchorSpriteIndex = spriteIndex;
 
-  unsigned char spritesize = 16;
+  set_sprite_pattern_index(anchorSpriteIndex);
+  set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0, true);
+  spriteIndex++;
+  uint8_t spritesize = 16;
 
   // data is 
   //  sprite size offset x
   //  sprite size offset y
-  for (unsigned char childSprite = 0; childSprite < sizeof(childPixelSprites); childSprite+=2)
+  for (uint8_t childSprite = 0; childSprite < sizeof(childPixelSprites); childSprite+=2)
   {
     set_sprite_composite(childPixelSprites[childSprite] * spritesize, childPixelSprites[childSprite + 1] * spritesize, childSprite / 2 + 1);
+    spriteIndex++;
   }
+
+  return anchorSpriteIndex;
 }
 
-signed char childBallSprites[] = {
+int8_t childBallSprites[] = {
     -1,-1,48, 0,-1,49, 1,-1,50,
     -1,0,51, 1,0,53,
     -1,1,54, 0,1,55, 1,1,56
 };
 
-static void CreateBallSprite()
+uint8_t CreateBallSprite()
 {
-  set_sprite_pattern_index(36);
-  set_sprite(128, 64, 52);
+  uint8_t anchorSpriteIndex = spriteIndex;
 
-  unsigned char spritesize = 16;
+  set_sprite_pattern_index(anchorSpriteIndex);
+  set_sprite(0, 0, 52, false);
+  spriteIndex++;
+
+  uint8_t spritesize = 16;
 
   // data is 
   //  sprite size offset x
   //  sprite size offset y
   //  sprite texture
-  for (unsigned char childSprite = 0; childSprite < sizeof(childBallSprites); childSprite+=3)
+  for (uint8_t childSprite = 0; childSprite < sizeof(childBallSprites); childSprite+=3)
   {
     set_sprite_composite(childBallSprites[childSprite] * spritesize, childBallSprites[childSprite + 1] * spritesize, childBallSprites[childSprite + 2]);
+    spriteIndex++;
   }
+
+  return anchorSpriteIndex;
 }
 
 static void RenderBall()
@@ -448,7 +546,7 @@ static void RenderBall()
   // map the texture block from extended memory into main memory
 
   // hard coded extended memory page
-  unsigned char textureFrame = ballFrame;
+  uint8_t textureFrame = ballFrame;
   if ( ballFrame > 6)
   {
     ZXN_WRITE_MMU1(54);

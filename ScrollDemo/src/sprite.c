@@ -37,13 +37,25 @@ void set_sprite_pattern_index(uint8_t slot)
   IO_SPRITE_SLOT = slot;
 }
 
-void set_sprite(uint16_t xpos, uint8_t ypos, uint8_t spritePattern)
+void set_sprite(uint16_t xpos, uint8_t ypos, uint8_t spritePattern, bool visible)
 {
+  uint8_t visibleFlag = 0x00;
+  if ( visible == true)
+  {
+    visibleFlag = 0x80;
+  }
+
+  // attribute 0
   IO_SPRITE_ATTRIBUTE = xpos; // xpos 
+
+  // attribute 1
   IO_SPRITE_ATTRIBUTE = ypos; // ypos
   
+  // attribute 2
   IO_SPRITE_ATTRIBUTE = (xpos >> 8) & 1;
-  IO_SPRITE_ATTRIBUTE = 0x80 + spritePattern;
+  
+  // attribute 3
+  IO_SPRITE_ATTRIBUTE = visibleFlag + spritePattern;
 }
 
 void set_sprite_composite(uint16_t xpos, uint8_t ypos, uint8_t spritePattern)
@@ -57,7 +69,7 @@ void set_sprite_composite(uint16_t xpos, uint8_t ypos, uint8_t spritePattern)
   IO_SPRITE_ATTRIBUTE = (xpos >> 8) & 1;
 
   // attribute 3
-  IO_SPRITE_ATTRIBUTE = 0xc0 + spritePattern;
+  IO_SPRITE_ATTRIBUTE = 0x80 + 0x040 + spritePattern;
 
   // attribute 4
   IO_SPRITE_ATTRIBUTE = 0x40;
