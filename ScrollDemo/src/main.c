@@ -121,7 +121,7 @@ uint8_t stage_counter = 0;
 uint8_t borderColour = 0;
 
 
-#define MAX_BALLS   2
+#define MAX_BALLS   4
 typedef struct BallSprite
 {
   uint16_t  visibleDelay;
@@ -130,6 +130,7 @@ typedef struct BallSprite
   int8_t    xVel;
   uint8_t   yPos;     // ypos is actually a fixed float, 8 bits int, 8 bits fraction
   int8_t    yVel;     // the velocity will be -32 to +32, but we will use yVel / 8 when updating the yPos
+  bool      ballFront;
 } BallSprite;
 
 BallSprite ballSprites[MAX_BALLS * 2]; // we need two ball sprites per ball, 1 behind and 1 in front of the rusty sprite
@@ -200,6 +201,7 @@ int main(void)
 
   if ( !loResLoadImage("bg.bin"))
   {
+    return 1;
 //    zx_border(7);
   }
 
@@ -231,6 +233,13 @@ int main(void)
 
   rustyAnchorSprite = CreateRustyPixelSprite();
 
+  for ( uint8_t ballIndex = MAX_BALLS;  ballIndex < MAX_BALLS * 2; ballIndex++)
+  {
+    BallSprite* ballSprite = &ballSprites[ballIndex];
+
+    ballSprite->ballAnchorSprite = CreateBallSprite();
+  }
+
   loResSetOffsetX(sinOffsetX[loresAngleSin]);
   loResSetOffsetY(sinOffsetX[loresAngleCos]);
 
@@ -240,7 +249,10 @@ int main(void)
   // NOTE : we need to move the code org to 0x8184 (zxpragma.inc)
   // because the interrupt table and code is in 0x8000 - 0x8183
 
-  loadMusic();
+  if(!loadMusic())
+  {
+    return 1;
+  }
 
   ZXN_WRITE_MMU2(musicBankStart);
   vt_init(0x4000);
@@ -260,9 +272,9 @@ int main(void)
     // REG_ACTIVE_VIDEO_LINE_H
     // For now the music playing happens just before we have reached end of screen rendering 
     IO_NEXTREG_REG = REG_ACTIVE_VIDEO_LINE_L;
-    while (IO_NEXTREG_DAT != 182);
+//    while (IO_NEXTREG_DAT != 182);
 
-    SetBorder(INK_GREEN);
+//    SetBorder(INK_GREEN);
 
 //    ZXN_WRITE_MMU2(musicBankStart);
 //    vt_play();
@@ -309,6 +321,15 @@ static void Update()
       {
         ballSprite->yPos = 192-32;
         ballSprite->yVel = -ballSprite->yVel;
+        if ( ballSprite->ballFront == true)
+        {
+          ballSprite->ballFront = false;
+        }
+        else
+        {
+          ballSprite->ballFront = true;
+        }
+        
       }
     }
     else
@@ -427,7 +448,21 @@ static void UpdateHW()
     {
       set_sprite_pattern_index(ballSprite->ballAnchorSprite);
       set_sprite(ballSprite->xPos, ballSprite->yPos, 52, true);
+
+      BallSprite* ballSpriteFront = &ballSprites[ballIndex + MAX_BALLS];
+      set_sprite_pattern_index(ballSpriteFront->ballAnchorSprite);
+
+      if ( ballSprite->ballFront )
+      {
+        set_sprite(ballSprite->xPos, ballSprite->yPos, 52, true);
+      }
+      else
+      {
+        set_sprite(ballSprite->xPos, ballSprite->yPos, 52, false);
+      }
+      
     }
+
   }
   //  CreateRustyPixelSprite();
   //  CreateBallSprite();
@@ -454,6 +489,12 @@ static void initialise()
   for( uint8_t ballIndex = 0; ballIndex < MAX_BALLS; ballIndex++)
   {
     BallSprite* ballSprite = &ballSprites[ballIndex];
+    ballSprite->visibleDelay = 0x1df6 + ballIndex * 0x06fa;
+    ballSprite->xPos = 64;
+    ballSprite->yPos = 0;
+    ballSprite->xVel = 1;
+
+    ballSprite = &ballSprites[ballIndex + MAX_BALLS];
     ballSprite->visibleDelay = 0x1df6 + ballIndex * 0x06fa;
     ballSprite->xPos = 64;
     ballSprite->yPos = 0;

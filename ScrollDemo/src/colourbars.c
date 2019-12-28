@@ -219,9 +219,8 @@ void ColourBars_Copper_Section(unsigned char section)
   unsigned char colour            = *sectionPos; 
   unsigned char prevColour; 
 
-  prevColour = colour;
-
   colour = *sectionPos++; 
+  prevColour = colour;
   if ( colour != 0)
   {
     IO_NEXTREG_DAT = REG_PALETTE_INDEX;
@@ -257,42 +256,46 @@ void ColourBars_Copper_Section(unsigned char section)
 
   for ( unsigned char sectionLine = 1; sectionLine < 32; sectionLine++)
   {
+    prevColour = colour;
     colour = *sectionPos++; 
 
     IO_NEXTREG_DAT = COPPER_WAIT;
     IO_NEXTREG_DAT = screenScanLine++;
 
-    if ( colour != 0)
+    if ( colour != prevColour)
     {
-      IO_NEXTREG_DAT = REG_PALETTE_INDEX;
-      IO_NEXTREG_DAT = 0x00;
-      IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-      IO_NEXTREG_DAT = colour;
+      if ( colour != 0)
+      {
+        IO_NEXTREG_DAT = REG_PALETTE_INDEX;
+        IO_NEXTREG_DAT = 0x00;
+        IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+        IO_NEXTREG_DAT = colour;
 
-      IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-      IO_NEXTREG_DAT = colour;
+        IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+        IO_NEXTREG_DAT = colour;
 
-      IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-      IO_NEXTREG_DAT = colour;
+        IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+        IO_NEXTREG_DAT = colour;
 
-      IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-      IO_NEXTREG_DAT = colour;
-    }
-    else
-    {
-      IO_NEXTREG_DAT = REG_PALETTE_INDEX;
-      IO_NEXTREG_DAT = 0x00;
-      IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-      IO_NEXTREG_DAT = 0x00;
+        IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+        IO_NEXTREG_DAT = colour;
+      }
+      else
+      {
+        IO_NEXTREG_DAT = REG_PALETTE_INDEX;
+        IO_NEXTREG_DAT = 0x00;
+        IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+        IO_NEXTREG_DAT = 0x00;
 
-      IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-      IO_NEXTREG_DAT = 0x20;
+        IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+        IO_NEXTREG_DAT = 0x20;
 
-      IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-      IO_NEXTREG_DAT = 0x40;
+        IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+        IO_NEXTREG_DAT = 0x40;
 
-      IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
-      IO_NEXTREG_DAT = 0x60;
+        IO_NEXTREG_DAT = REG_PALETTE_VALUE_8;
+        IO_NEXTREG_DAT = 0x60;
+      }
     }
   }
 }
@@ -324,14 +327,14 @@ static void ColourBars_DrawBar(unsigned char barNumber, unsigned char sectionLin
   unsigned char* sectionLinePtr = &sectionLines[sectionLine]; 
   sectionLinePtr += (barNumber/2);
 
-  for ( barLine = 0; barLine < barHalfHeight; barLine++, barColourPtr++, sectionLinePtr++)
+  for ( barLine = 0; barLine < barHalfHeight; barLine++)
   {
-    *sectionLinePtr = *barColourPtr;
+    *sectionLinePtr++ = *barColourPtr++;
   }
 
   barColourPtr--;
-  for ( barLine = 0; barLine < barHalfHeight; barLine++, barColourPtr--, sectionLinePtr++)
+  for ( barLine = 0; barLine < barHalfHeight; barLine++)
   {
-    *sectionLinePtr = *barColourPtr;
+    *sectionLinePtr++ = *barColourPtr--;
   }
 }
