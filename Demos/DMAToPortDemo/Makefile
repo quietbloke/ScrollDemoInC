@@ -39,7 +39,7 @@ run: $(APP).nex
 clean:
 	rm *.bin -f
 	rm *.map -f
-	rm *.sna -f
+	rm *.nex -f
 	rm *.spr -f
 	rm *.nxt -f
 	rm *.pt3 -f
