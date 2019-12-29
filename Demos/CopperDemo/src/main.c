@@ -23,6 +23,7 @@ static void TransferValueToMemory(unsigned char value, unsigned char* destinatio
 static void TransferValueToMemorySlow(unsigned char value, unsigned char* destination, unsigned int length);
 static void Render();
 static void Update();
+static void loResPlot(uint8_t xpos, uint8_t ypos, uint8_t colourIndex);
 
 /* --------------------------------- */
 
@@ -89,6 +90,29 @@ static void Render()
   copperRun(copperBlocks);
 }
 
+static void Initialise()
+{
+  IO_NEXTREG_REG = REG_SPRITE_LAYER_SYSTEM;
+  IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_LAYER_PRIORITY_LSU; 
+
+  loResSetInitPallete();
+
+  IO_NEXTREG_REG = REG_CLIP_WINDOW_ULA;
+  IO_NEXTREG_DAT = 0;
+  IO_NEXTREG_DAT = 255;
+  IO_NEXTREG_DAT = 0;
+  IO_NEXTREG_DAT = 191;
+
+  // clear the lowres screen
+  for ( uint8_t y = 0; y < 100; y++)
+  {
+    for ( uint8_t x = 0; x < 128; x++)
+    {
+      loResPlot(x,y,0);
+    }
+  }
+}
+
 static void loResSetInitPallete()
 {
   IO_NEXTREG_REG = REG_PALETTE_CONTROL;
@@ -114,11 +138,17 @@ static void loResSetInitPallete()
   IO_NEXTREG_DAT = 0xff;      // border white
 }
 
-static void Initialise()
+static void loResPlot(uint8_t xpos, uint8_t ypos, uint8_t colourIndex)
 {
-  IO_NEXTREG_REG = REG_SPRITE_LAYER_SYSTEM;
-  IO_NEXTREG_DAT = RSLS_ENABLE_LORES | RSLS_LAYER_PRIORITY_LSU; 
+  uint8_t* basepokeaddress = (uint8_t *)0x4000;
+  if (ypos > 47)
+  {
+    basepokeaddress = (uint8_t *)0x6000;
+    ypos -= 48;
+  }
 
-  loResSetInitPallete();
+  basepokeaddress[ypos * 128 + xpos] = colourIndex;
+
+  return;
 }
 

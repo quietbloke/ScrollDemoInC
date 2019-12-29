@@ -16,8 +16,8 @@ ASMSOURCES != find src -type f -name "*.asm" | sort
 
 COBJECTS = $(CSOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o) 
 
-$(APP).sna : $(COBJECTS) $(ASMOBJECTS) $(GFXOBJECTS)
-	zcc +zxn -vn -m -startup=31 -clib=$(LIB) $(COBJECTS) $(ASMSOURCES) -o $(APP) -pragma-include:zpragma.inc -create-app -Cz"--sna"
+$(APP).nex : $(COBJECTS) $(ASMOBJECTS) $(GFXOBJECTS) $(AUDIOOBJECTS)
+	zcc +zxn -vn -m -startup=31 -clib=$(LIB) $(COBJECTS) $(ASMSOURCES) -o $(APP) -pragma-include:zpragma.inc -create-app -subtype=nex -Cz"--clean"
 
 $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	zcc +zxn -vn -m -startup=31 -clib=$(LIB) $< -o $@ -c -pragma-include:zpragma.inc
@@ -43,13 +43,13 @@ $(OBJDIR)/%.o : $(SRCDIR)/%.c
 
 	cp Audio/music2.pt3 music.pt3
 
-run: $(APP).sna
-	$(EMU) $(APP).sna
+run: $(APP).nex
+	$(EMU) $(APP).nex
 
 clean:
 	rm *.bin -f
 	rm *.map -f
-	rm *.sna -f
+	rm *.nex -f
 	rm *.spr -f
 	rm *.nxt -f
 	rm *.pt3 -f
@@ -62,4 +62,3 @@ print:
 	@$(ECHO) Source ASM : $(ASMSOURCES)
 	@$(ECHO) Objects C  : $(COBJECTS)
 	@$(ECHO) Objects ASM: $(ASMOBJECTS)
-	
