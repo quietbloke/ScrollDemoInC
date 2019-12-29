@@ -4,7 +4,7 @@
 void ColourBars_Init();
 void ColourBars_Update();
 
-void ColourBars_Copper_Section(unsigned char section);
+void ColourBars_Copper_Section(uint8_t section);
 
 
 void ColourBars_Copper_Done();

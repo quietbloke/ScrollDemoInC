@@ -1,15 +1,15 @@
 #include <arch/zxn.h>
 
-void TransferValueToMemorySlow(unsigned char value, unsigned char* destination, unsigned int length)
+void TransferValueToMemorySlow(uint8_t value, uint8_t* destination, uint16_t length)
 {
-  unsigned char* finalAddress = destination + length;
+  uint8_t* finalAddress = destination + length;
   while( destination < finalAddress)
   {
     *destination++ = value;
   }
 }
 
-void TransferValueToMemory(unsigned char value, unsigned char* destination, unsigned int length)
+void TransferValueToMemory(uint8_t value, uint8_t* destination, uint16_t length)
 {
   // Note : D_WR0 is defined as zero, however wiki page doc says the lower 2 bits must not be 00.
   // However WR0_TRANSFER has a value of 1, so you must always add this ??
@@ -19,8 +19,8 @@ void TransferValueToMemory(unsigned char value, unsigned char* destination, unsi
 
   // WR0 instruction, write A -> B, supply port A start address and block length as the next 4 values sent
 
-  unsigned int sourceValueAddress = (unsigned int) &value;
-  unsigned int destinationAddress = (unsigned int) destination;
+  uint16_t sourceValueAddress = (uint16_t) &value;
+  uint16_t destinationAddress = (uint16_t) destination;
 
   IO_DMA = D_DISABLE_DMA;
 
@@ -48,7 +48,7 @@ void TransferValueToMemory(unsigned char value, unsigned char* destination, unsi
 
 }
 
-void TransferMemoryToPortDMA(unsigned char* source, unsigned int length, unsigned char port)
+void TransferMemoryToPortDMA(uint8_t* source, uint16_t length, uint8_t port)
 {
   // Note : D_WR0 is defined as zero, however wiki page doc says the lower 2 bits must not be 00.
   // However WR0_TRANSFER has a value of 1, so you must always add this ??
@@ -58,7 +58,7 @@ void TransferMemoryToPortDMA(unsigned char* source, unsigned int length, unsigne
 
   // WR0 instruction, write A -> B, supply port A start address and block length as the next 4 values sent
 
-  unsigned int sourceAddress = (unsigned int) source;
+  uint16_t sourceAddress = (uint16_t) source;
 
   IO_DMA = D_DISABLE_DMA;
 

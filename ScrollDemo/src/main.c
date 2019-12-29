@@ -21,7 +21,6 @@
 #include "music.h"
 #include "dma.h"
 
-#define MEMORY_BLOCK_SIZE 256
 #define MEMORY_BLOCK_START_ADDRESS 0x2000
 
 extern uint8_t music_module[];
@@ -137,13 +136,13 @@ BallSprite ballSprites[MAX_BALLS * 2]; // we need two ball sprites per ball, 1 b
 
 /* --------------------------------- */
 
-static void initialise();
-static uint8_t CreateRustyPixelSprite();
-static uint8_t CreateBallSprite();
-static void SetBorder(uint8_t border);
-static void Update();
-static void UpdateHW();
-static void RenderBall();
+static void     initialise();
+static uint8_t  CreateRustyPixelSprite();
+static uint8_t  CreateBallSprite();
+static void     SetBorder(uint8_t border);
+static void     Update();
+static void     UpdateHW();
+static void     CreateBallPatterns();
 
 /* --------------------------------- */
 
@@ -154,7 +153,10 @@ IM2_DEFINE_ISR_8080(isr)
    
    // save nextreg register
   save = IO_NEXTREG_REG;
+
+  // remember the current border colour
   borderSave = borderColour;
+
   SetBorder(INK_MAGENTA);
 
   // swap in the music bank
@@ -165,25 +167,18 @@ IM2_DEFINE_ISR_8080(isr)
   // swap it back out again
   ZXN_WRITE_MMU2(0xff);
 
-  // Temp code to slow things down.
-  // for ( char p =0; p < 7; p++)
-  // {
-  //   unsigned int x = rand()%128;
-  //   unsigned int y = rand()%96;
-  //   loResPlot(x, y, x);
-  // }
-
   // restore nextreg register
-
   IO_NEXTREG_REG = save;
 
+  // restore the border colour
   SetBorder(borderSave);
 }
 
-void SetBorder(unsigned char border)
+void SetBorder(uint8_t border)
 {
-//  zx_border(border);
-  borderColour = border;
+  // For texting switch the border setting on.
+  // zx_border(border);    zx_border(INK_RED);
+    borderColour = border;
 }
 
 int main(void)
@@ -194,36 +189,35 @@ int main(void)
   initialise();
   loResSetInitPallete();
 
-//  zx_border(INK_BLUE);
-
   loResSetClipWindow ( 0, 255, 255, 255); // hide the bg 
   layer2SetClipWindow ( 0, 255, 255, 255); // hide the sprite window
 
   if ( !loResLoadImage("bg.bin"))
   {
+    zx_border(INK_RED);
     return 1;
-//    zx_border(7);
   }
 
   if ( !sprites_load_ball_patterns())
   {
-  //    zx_border(7);
+    zx_border(INK_RED);
+    return 1;
   }
 
   if ( !sprites_load_patterns("sprites.spr"))
   {
-  //    zx_border(7);
+    zx_border(INK_RED);
+    return 1;
   }
 
-  //  CreateRustyPixelSprite();
-
   // Draw the 4 rounded corner sprites
-  set_sprite(32,32+192-16, 32, true);
-  set_sprite(32+256-16,32+192-16, 33, true);
+  set_sprite(32,32+(192-16), 32, true);
+  set_sprite(32+(256-16),32+(192-16), 33, true);
   set_sprite(32, 32, 34, true);
-  set_sprite(32+256-16, 32, 35, true);
+  set_sprite(32+(256-16), 32, 35, true);
   spriteIndex += 4;
 
+  // create the balls sprites behind the rusty pixel sprite
   for ( uint8_t ballIndex = 0;  ballIndex < MAX_BALLS; ballIndex++)
   {
     BallSprite* ballSprite = &ballSprites[ballIndex];
@@ -233,6 +227,7 @@ int main(void)
 
   rustyAnchorSprite = CreateRustyPixelSprite();
 
+  // create the balls sprites in front of the rusty pixel sprite
   for ( uint8_t ballIndex = MAX_BALLS;  ballIndex < MAX_BALLS * 2; ballIndex++)
   {
     BallSprite* ballSprite = &ballSprites[ballIndex];
@@ -243,16 +238,13 @@ int main(void)
   loResSetOffsetX(sinOffsetX[loresAngleSin]);
   loResSetOffsetY(sinOffsetX[loresAngleCos]);
 
-  //  set_sprite_pattern_index(0);
-  //  set_sprite(255, 255, 0);
-
-  // NOTE : we need to move the code org to 0x8184 (zxpragma.inc)
-  // because the interrupt table and code is in 0x8000 - 0x8183
-
   if(!loadMusic())
   {
     return 1;
   }
+
+  // NOTE : we need to move the code org to 0x8184 (zxpragma.inc)
+  // because the interrupt table and code is in 0x8000 - 0x8183
 
   ZXN_WRITE_MMU2(musicBankStart);
   vt_init(0x4000);
@@ -261,32 +253,33 @@ int main(void)
   im2_init((void *)0x8000);
   memset((void *)0x8000, 0x81, 257);
   z80_bpoke(0x8181, 0xc3);   // z80 JP instruction
-  z80_wpoke(0x8182, (unsigned int)isr);
+  z80_wpoke(0x8182, (uint16_t)isr);
 
   // enable interrupts
-//  intrinsic_ei();
+  intrinsic_ei();
 
   // keep going till space key is pressed
   while(!in_key_pressed(IN_KEY_SCANCODE_SPACE) )
   {
-    // REG_ACTIVE_VIDEO_LINE_H
-    // For now the music playing happens just before we have reached end of screen rendering 
     IO_NEXTREG_REG = REG_ACTIVE_VIDEO_LINE_L;
-//    while (IO_NEXTREG_DAT != 182);
 
-//    SetBorder(INK_GREEN);
+    // If you would rather play the music within the main loop
+    // then remove the interrupt code and uncomment the following
+    // which will play the music just before the screen rendering finishes.
 
-//    ZXN_WRITE_MMU2(musicBankStart);
-//    vt_play();
-//    ZXN_WRITE_MMU2(0xff);
+    // while (IO_NEXTREG_DAT != 182);  
+    // SetBorder(INK_GREEN);
 
-    SetBorder(INK_BLACK);
+    // ZXN_WRITE_MMU2(musicBankStart);
+    // vt_play();
+    // ZXN_WRITE_MMU2(0xff);
 
-    // wait until line 192 is active
+    // SetBorder(INK_BLACK);
+
+    // wait until line 192 is active ( wee have finished rendering the screen)
     while (IO_NEXTREG_DAT != 192);
 
     UpdateHW();
-
     Update();
 
     SetBorder(INK_BLACK);
@@ -431,14 +424,11 @@ static void UpdateHW()
   loResSetOffsetX(sinOffsetX[loresAngleSin]);
   loResSetOffsetY(sinOffsetX[loresAngleCos]);
 
-  //  set_sprite_pattern_index(4);
-  //  set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
-
   SetBorder(INK_GREEN);
   copperRun();
 
   SetBorder(INK_RED);
-  RenderBall();
+  CreateBallPatterns();
 
   SetBorder(INK_CYAN);
   for ( uint8_t ballIndex = 0;  ballIndex < MAX_BALLS; ballIndex++)
@@ -464,20 +454,10 @@ static void UpdateHW()
     }
 
   }
-  //  CreateRustyPixelSprite();
-  //  CreateBallSprite();
-
-//  set_sprite_pattern_index(ballAnchorSpriteBack);
-//  set_sprite(32, 32, 36);
 
   set_sprite_pattern_index(rustyAnchorSprite);
   set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0, true);
 
-//  set_sprite_pattern_index(ballAnchorSpriteFront);
-//  set_sprite(sinOffsetX[spriteAngleSin] + 128, sinOffsetY[spriteAngleCos] + 52, 0);
-//  set_sprite(92, 32, 36);
-  // plotting the verticals of the scrollers are last as they can be done
-  // just in time while the screen is rendering
   SetBorder(INK_YELLOW);
   Scroller_Render();
 
@@ -488,17 +468,14 @@ static void initialise()
 {
   for( uint8_t ballIndex = 0; ballIndex < MAX_BALLS; ballIndex++)
   {
-    BallSprite* ballSprite = &ballSprites[ballIndex];
-    ballSprite->visibleDelay = 0x1df6 + ballIndex * 0x06fa;
-    ballSprite->xPos = 64;
-    ballSprite->yPos = 0;
-    ballSprite->xVel = 1;
+    BallSprite* ballSprite    = &ballSprites[ballIndex];
+    ballSprite->visibleDelay  = 0x1df6 + ballIndex * 0x06fa;
+    ballSprite->xPos          = 64;
+    ballSprite->yPos          = 0;
+    ballSprite->xVel          = 1;
 
     ballSprite = &ballSprites[ballIndex + MAX_BALLS];
-    ballSprite->visibleDelay = 0x1df6 + ballIndex * 0x06fa;
-    ballSprite->xPos = 64;
-    ballSprite->yPos = 0;
-    ballSprite->xVel = 1;
+    ballSprite->visibleDelay  = 0x1df6 + ballIndex * 0x06fa;
   }
 
   // Enable the lowres screen, show sprites
@@ -578,28 +555,26 @@ uint8_t CreateBallSprite()
   return anchorSpriteIndex;
 }
 
-static void RenderBall()
+static void CreateBallPatterns()
 {
   // decide what frame of animation ( block of 9 textures ) to use
-  // for now just assume frame 0
-
-  // copy the textures
-  // map the texture block from extended memory into main memory
-
   // hard coded extended memory page
   uint8_t textureFrame = ballFrame;
+
+  // map the texture block from extended memory into main memory
   if ( ballFrame > 6)
   {
-    ZXN_WRITE_MMU1(54);
-    ZXN_WRITE_MMU2(55);
+    ZXN_WRITE_MMU1(ballsBank2Start);
+    ZXN_WRITE_MMU2(ballsBank2Start+1);
     textureFrame -= 7;
   }
   else
   {
-    ZXN_WRITE_MMU1(52);
-    ZXN_WRITE_MMU2(53);
+    ZXN_WRITE_MMU1(ballsBank1Start);
+    ZXN_WRITE_MMU2(ballsBank1Start+1);
   }
 
+  // copy the textures
   set_sprite_pattern_index(48);
   TransferMemoryToPortDMA(MEMORY_BLOCK_START_ADDRESS + (256*9)*textureFrame, 256 * 9, __IO_SPRITE_PATTERN);
 }

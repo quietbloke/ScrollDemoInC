@@ -7,7 +7,7 @@
 
 #define COPPER_WAIT 0x80;
 
-static signed wibble[] = {
+static int8_t wibble[] = {
    2 , 3 , 5 , 6 , 8 , 9 , 11 , 12,
    14 , 15 , 16 , 18 , 19 , 20 , 21 , 23,
    24 , 25 , 26 , 27 , 27 , 28 , 29 , 30,
@@ -42,7 +42,7 @@ static signed wibble[] = {
   -13 ,-11 ,-10 ,-8 ,-6 ,-4 ,-2 , 0
 };
 
-unsigned char wibbleOffset = 0;
+uint8_t wibbleOffset = 0;
 
 void copperRun()
 {
@@ -119,8 +119,8 @@ void copperRun()
 
   ColourBars_Copper_Done();
 
-  unsigned char wibblePos = wibbleOffset;
-  for ( unsigned char scanline = 160; scanline < 192; scanline++)
+  uint8_t wibblePos = wibbleOffset;
+  for ( uint8_t scanline = 160; scanline < 192; scanline++)
   {
     // wait till next scanline
     IO_NEXTREG_DAT = COPPER_WAIT;
@@ -136,7 +136,7 @@ void copperRun()
   IO_NEXTREG_DAT = 0xff;
   IO_NEXTREG_DAT = 0xff;
 
-    // Start
+  // Start
   ZXN_WRITE_REG(REG_COPPER_CONTROL_H, 0xc0);
   ZXN_WRITE_REG(REG_COPPER_CONTROL_L, 0);
 }

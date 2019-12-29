@@ -15,7 +15,7 @@
 #define SPRITES_OVER_BORDER        2
 #define SPRITES_ENABLE_CLIPPING    16
 
-bool load_ball_textures_to_memory(char* filename, unsigned int startBank, unsigned char totalBanks);
+bool load_ball_textures_to_memory(char* filename, uint16_t startBank, uint8_t totalBanks);
 
 void enable_sprites()
 {
@@ -23,7 +23,7 @@ void enable_sprites()
   IO_NEXTREG_DAT = SPRITES_VISIBLE; 
 }
 
-void SpriteSetClipWindow(unsigned char left, unsigned char right, unsigned char top, unsigned char bottom)
+void SpriteSetClipWindow(uint8_t left, uint8_t right, uint8_t top, uint8_t bottom)
 {
   IO_NEXTREG_REG = REG_CLIP_WINDOW_SPRITES;
   IO_NEXTREG_DAT = left;
@@ -88,7 +88,7 @@ bool sprites_load_patterns(char* filename)
 {
   uint8_t filehandle;
   errno = 0;
-  unsigned char col;
+  uint8_t col;
 
   set_sprite_pattern_index(0);
 
@@ -98,7 +98,7 @@ bool sprites_load_patterns(char* filename)
     return false;
   }
 
-  for ( unsigned int l = 0; l < 32 * 32 * 8 * 2; l++  )
+  for ( uint16_t l = 0; l < 32 * 32 * 8 * 2; l++  )
   {
     esxdos_f_read(filehandle, (void *) &col, 1);
     if (errno)
@@ -122,7 +122,7 @@ bool sprites_load_ball_patterns()
   return true;
 }
 
-bool load_ball_textures_to_memory(char* filename, unsigned int startBank, unsigned char totalBanks)
+bool load_ball_textures_to_memory(char* filename, uint16_t startBank, uint8_t totalBanks)
 {
   uint8_t filehandle;
   errno = 0;
@@ -135,9 +135,9 @@ bool load_ball_textures_to_memory(char* filename, unsigned int startBank, unsign
     return false;
   }
 
-  for (unsigned char bankIndex = 0; bankIndex <= totalBanks; bankIndex++)
+  for (uint8_t bankIndex = 0; bankIndex <= totalBanks; bankIndex++)
   {
-    unsigned char* destination = 0x2000;
+    uint8_t* destination = 0x2000;
     ZXN_WRITE_MMU1(startBank + bankIndex);
 
     esxdos_f_read(filehandle, (void *) destination, 1024*8);

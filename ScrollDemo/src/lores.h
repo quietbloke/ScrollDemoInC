@@ -2,10 +2,10 @@
 #define LOWRES_H
 
 void loResSetInitPallete();
-void loResPlot(unsigned char xpos, unsigned char ypos, unsigned char colourIndex);
+void loResPlot(uint8_t xpos, uint8_t ypos, uint8_t colourIndex);
 bool loResLoadImage(char* filename);
-void loResSetOffsetX(signed char xOffset);
-void loResSetOffsetY(signed char yOffset);
-void loResSetClipWindow(unsigned char left, unsigned char right, unsigned char top, unsigned char bottom);
+void loResSetOffsetX(int8_t xOffset);
+void loResSetOffsetY(int8_t yOffset);
+void loResSetClipWindow(uint8_t left, uint8_t right, uint8_t top, uint8_t bottom);
 
 #endif

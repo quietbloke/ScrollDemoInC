@@ -57,14 +57,14 @@ void Scroller_Init()
   scrollers[4].message    = "WELCOME TO THE FINAL SCROLLER, YES! I AM PRETTY SURE YOU ALL ARE RATHER TIRED OF READING THESE SCROLLERS... BUT BY ALL MEANS TAKE A GANDER AT THE SOURCE CODE AND SEE HOW EASY IT SHOULD BE TO REUSE THE CODE TO ADD SCROLLERS TO YOUR OWN PROJECTS. THE CODE ALSO INCLUDES TILE PLOT ROUTINES FOR 8, 16, AND 32 PIXEL TILES, SO THEY CAN BE USED FOR LEVEL TILING, TEXT DISPLAY, AND A WHOLE CACOPHONY OF OTHER USES, WELL, A COUPLE MORE AT LEAST...  THOUGH IT HAS BEEN FUN, IT IS TIME TO WRAP THIS LITTLE SCROLLER UP... WRAP BEING THE OPERATIVE WORD, WELL... SEEING AS IT IS GOING TO WRAP, SO A WRAPPING WE SHALL GO........     ";
 }
 
-Scroller* Scroller_Get(unsigned char scrollerNum)
+Scroller* Scroller_Get(uint8_t scrollerNum)
 {
   return &scrollers[scrollerNum];
 }
 
 void Scroller_Update()
 {
-  for ( unsigned char scrollerIndex = 0; scrollerIndex < 5; scrollerIndex++)
+  for ( uint8_t scrollerIndex = 0; scrollerIndex < 5; scrollerIndex++)
   {
     Scroller* scroller = &scrollers[scrollerIndex];
 
@@ -96,7 +96,7 @@ void Scroller_Update()
 
 void Scroller_Render()
 {
-  for ( unsigned char scrollerIndex = 0; scrollerIndex < 5; scrollerIndex++)
+  for ( uint8_t scrollerIndex = 0; scrollerIndex < 5; scrollerIndex++)
   {
     Scroller* scroller = &scrollers[scrollerIndex];
 

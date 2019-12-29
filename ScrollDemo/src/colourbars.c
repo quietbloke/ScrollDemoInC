@@ -15,20 +15,20 @@
 /* ---------------------------------- */
 
 static void ColourBars_Build();
-static void ColourBars_DrawBar(unsigned char barNumber, unsigned char sectionLine);
+static void ColourBars_DrawBar(uint8_t barNumber, uint8_t sectionLine);
 
 /* ---------------------------------- */
 
-unsigned char sectionLines[96];
+uint8_t sectionLines[96];
 
-unsigned char currentBarColours[] = {0,0,0,0,0,0,0}; // current colours
-unsigned char targetBarColours[] = {0,0,0,0,0,0,0};  // target colours
+uint8_t currentBarColours[] = {0,0,0,0,0,0,0}; // current colours
+uint8_t targetBarColours[] = {0,0,0,0,0,0,0};  // target colours
 
-unsigned char colourFadeMask = 7;                   // value 0 - 7
-unsigned char nextColourSet = 0;                    // value 0 - 5
-unsigned char colourPause = 0;                      // time to wait before picking next colourset
+uint8_t colourFadeMask = 7;                   // value 0 - 7
+uint8_t nextColourSet = 0;                    // value 0 - 5
+uint8_t colourPause = 0;                      // time to wait before picking next colourset
 
-unsigned char barColours[] = 
+uint8_t barColours[] = 
 {
   (1 << 5),     (2 << 5),     (3 << 5),     (4 << 5),     (5 << 5),     (6 << 5),     (7 << 5),       // red
   (1 << 5) + 0, (2 << 5) + 1, (3 << 5) + 1, (4 << 5) + 2, (5 << 5) + 2, (6 << 5) + 3, (7 << 5) + 2,   // purple (red and blue)
@@ -38,7 +38,7 @@ unsigned char barColours[] =
   (5 << 2) + (5 << 5 ), (6 << 2) + (6 << 5 ), (7 << 2) + (7 << 5 ),   // green and red
 };
 
-unsigned char ColourBarSineData[] = {
+uint8_t ColourBarSineData[] = {
   63 , 64 , 65 , 65 , 66 , 67 , 68 , 68,
   69 , 70 , 70 , 71 , 72 , 72 , 73 , 73,
   74 , 74 , 75 , 75 , 76 , 76 , 77 , 77,
@@ -73,11 +73,11 @@ unsigned char ColourBarSineData[] = {
   56 , 57 , 58 , 59 , 60 , 61 , 61 , 62,
 };
 
-unsigned char bars[MAX_BARS];
+uint8_t bars[MAX_BARS];
 
-unsigned char barPause = 0; // BAR_FIRST_PAUSE;
-unsigned char barCount = 0;
-unsigned char barMoveCount = 0;
+uint8_t barPause = 0; // BAR_FIRST_PAUSE;
+uint8_t barCount = 0;
+uint8_t barMoveCount = 0;
 
 void ColourBars_Init()
 {
@@ -110,7 +110,7 @@ void ColourBars_Update()
   if ( barMoveCount == 0 )
   {
     // Update the positions of all the bars
-    for ( unsigned char idx=0; idx < barCount; idx++)
+    for ( uint8_t idx=0; idx < barCount; idx++)
     {
       bars[idx]++;
     }
@@ -131,14 +131,14 @@ void ColourBars_Update()
     // if we are in the process of fading
     if ( colourFadeMask > 0)
     {
-      for(unsigned char c = 0; c < 7; c++)
+      for(uint8_t c = 0; c < 7; c++)
       {
         // See if blue needs to change towards target
-        unsigned char newcolour = currentBarColours[c];
+        uint8_t newcolour = currentBarColours[c];
 
         // blue component
-        unsigned char colour = currentBarColours[c] & 0x03;
-        unsigned char targetcolour = barColours[nextColourSet*7 + c] & 0x03;
+        uint8_t colour = currentBarColours[c] & 0x03;
+        uint8_t targetcolour = barColours[nextColourSet*7 + c] & 0x03;
 
         if ( colour < targetcolour)
         {
@@ -205,19 +205,19 @@ static void ColourBars_Build()
 
   if ( barCount > 0)
   {
-    for( unsigned char barIdx = barCount-1; barIdx < 255; barIdx--)
+    for( uint8_t barIdx = barCount-1; barIdx < 255; barIdx--)
     {
       ColourBars_DrawBar(barIdx, ColourBarSineData[bars[barIdx]]);
     }
   }
 }
 
-void ColourBars_Copper_Section(unsigned char section)
+void ColourBars_Copper_Section(uint8_t section)
 {
-  unsigned char screenScanLine    = section * 32 + 32;
-  unsigned char *sectionPos       = &sectionLines[0] + section * 32;
-  unsigned char colour            = *sectionPos; 
-  unsigned char prevColour; 
+  uint8_t screenScanLine    = section * 32 + 32;
+  uint8_t *sectionPos       = &sectionLines[0] + section * 32;
+  uint8_t colour            = *sectionPos; 
+  uint8_t prevColour; 
 
   colour = *sectionPos++; 
   prevColour = colour;
@@ -254,7 +254,7 @@ void ColourBars_Copper_Section(unsigned char section)
     IO_NEXTREG_DAT = 0x60;
   }
 
-  for ( unsigned char sectionLine = 1; sectionLine < 32; sectionLine++)
+  for ( uint8_t sectionLine = 1; sectionLine < 32; sectionLine++)
   {
     prevColour = colour;
     colour = *sectionPos++; 
@@ -317,14 +317,14 @@ void ColourBars_Copper_Done()
   IO_NEXTREG_DAT = 0x60;
 }
 
-static void ColourBars_DrawBar(unsigned char barNumber, unsigned char sectionLine)
+static void ColourBars_DrawBar(uint8_t barNumber, uint8_t sectionLine)
 {
-  unsigned char barHalfHeight = 7 - (barNumber / 2);
-  unsigned char barFullHeight = barHalfHeight * 2;
-  unsigned char* barColourPtr = currentBarColours;
-  unsigned char barLine = 0;
+  uint8_t barHalfHeight = 7 - (barNumber / 2);
+  uint8_t barFullHeight = barHalfHeight * 2;
+  uint8_t* barColourPtr = currentBarColours;
+  uint8_t barLine = 0;
 
-  unsigned char* sectionLinePtr = &sectionLines[sectionLine]; 
+  uint8_t* sectionLinePtr = &sectionLines[sectionLine]; 
   sectionLinePtr += (barNumber/2);
 
   for ( barLine = 0; barLine < barHalfHeight; barLine++)

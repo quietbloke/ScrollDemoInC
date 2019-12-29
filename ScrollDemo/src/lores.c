@@ -6,16 +6,16 @@
 #include <errno.h>
 #include <arch/zxn/esxdos.h>
 
-#define LOWRES_TOP_HALF     (unsigned char*)(0x4000)
-#define LOWRES_BOTTOM_HALF  (unsigned char*)(0x6000)
+#define LOWRES_TOP_HALF     (uint8_t*)(0x4000)
+#define LOWRES_BOTTOM_HALF  (uint8_t*)(0x6000)
 
 // NOTE : Assume values for xpos, ypos are valid ( 0-127, 0-95)
-void loResPlot(unsigned char xpos, unsigned char ypos, unsigned char colourIndex)
+void loResPlot(uint8_t xpos, uint8_t ypos, uint8_t colourIndex)
 {
-  unsigned char* basepokeaddress = (unsigned char *)0x4000;
+  uint8_t* basepokeaddress = (uint8_t *)0x4000;
   if (ypos > 47)
   {
-    basepokeaddress = (unsigned char *)0x6000;
+    basepokeaddress = (uint8_t *)0x6000;
     ypos -= 48;
   }
 
@@ -24,19 +24,19 @@ void loResPlot(unsigned char xpos, unsigned char ypos, unsigned char colourIndex
   return;
 }
 
-void loResSetOffsetX(signed char xOffset)
+void loResSetOffsetX(int8_t xOffset)
 {
   IO_NEXTREG_REG = REG_LORES_OFFSET_X;
   IO_NEXTREG_DAT = xOffset * 2; 
 }
 
-void loResSetOffsetY(signed char yOffset)
+void loResSetOffsetY(int8_t yOffset)
 {
   IO_NEXTREG_REG = REG_LORES_OFFSET_Y;
   IO_NEXTREG_DAT = (yOffset * 2) & 0xbf;   // NOTE : restrict to 192 for vertical values 
 }
 
-void loResSetClipWindow(unsigned char left, unsigned char right, unsigned char top, unsigned char bottom)
+void loResSetClipWindow(uint8_t left, uint8_t right, uint8_t top, uint8_t bottom)
 {
   IO_NEXTREG_REG = REG_CLIP_WINDOW_ULA;
   IO_NEXTREG_DAT = left;
@@ -82,9 +82,9 @@ bool loResLoadImage(char* filename)
     return false;
   }
 
-  unsigned char* destination = LOWRES_TOP_HALF;
+  uint8_t* destination = LOWRES_TOP_HALF;
 
-  for ( unsigned char ypos = 0; ypos < 48; ypos++)
+  for ( uint8_t ypos = 0; ypos < 48; ypos++)
   {
     esxdos_f_read(filehandle, (void *) destination, 128);
     if (errno)
@@ -96,7 +96,7 @@ bool loResLoadImage(char* filename)
 
   destination = LOWRES_BOTTOM_HALF;
 
-  for ( unsigned char ypos = 0; ypos < 48; ypos++)
+  for ( uint8_t ypos = 0; ypos < 48; ypos++)
   {
     esxdos_f_read(filehandle, (void *) destination, 128);
     if (errno)

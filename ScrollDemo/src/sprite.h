@@ -2,7 +2,7 @@
 #define SPRITE_H
 
 
-void SpriteSetClipWindow(unsigned char left, unsigned char right, unsigned char top, unsigned char bottom);
+void SpriteSetClipWindow(uint8_t left, uint8_t right, uint8_t top, uint8_t bottom);
 
 void enable_sprites();
 void set_sprite_pattern_index(uint8_t slot);

@@ -20,7 +20,7 @@ bool loadMusic()
     return false;
   }
 
-    unsigned char* destination = 0x4000;
+    uint8_t* destination = 0x4000;
     ZXN_WRITE_MMU2(musicBankStart);
 
     esxdos_f_read(filehandle, (void *) destination, 1024*8);
