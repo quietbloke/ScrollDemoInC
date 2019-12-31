@@ -59,10 +59,10 @@ void layer2Initialise()
   ZXN_NEXTREG(REG_LAYER_2_RAM_BANK, layer216KBankStart);
 
   // Load fonts
-  loadFont("font.nxt", fontBankStart, 8);
-  loadFont("font2.nxt", font2BankStart, 8);
-  loadFont("font3.nxt", font3BankStart, 8);
-  loadFont("font4.nxt", font4BankStart, 2);
+//  loadFont("font.nxt", fontBankStart, 8);
+//  loadFont("font2.nxt", font2BankStart, 8);
+//  loadFont("font3.nxt", font3BankStart, 8);
+//  loadFont("font4.nxt", font4BankStart, 2);
 }
 
 void layer2Clear(uint8_t colour)
