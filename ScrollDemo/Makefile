@@ -8,11 +8,11 @@ SRCDIR := src
 OBJDIR := obj
 LIB := sdcc_iy
 
-EMU := ../../../../tools/CSpect/CSpect.exe -zxnext -s14 -w4 -r -vsync -mmc=./
+EMU := ../../../../tools/CSpect/CSpect.exe -zxnext -s14 -w3 -r -vsync -mmc=./
 MAPGRABBER := ../../../tools/MapGrabber 
 
 GFXSRC := GFX/Bg.bmp GFX/Sprites.bmp GFX/Balls01.bmp GFX/Balls02.bmp
-GFXOBJECTS := bg.bin sprites.spr balls01.spr balls02.spr font4.nxt
+GFXOBJECTS := bg.bin sprites.spr balls01.spr balls02.spr font.nxt font2.nxt font3.nxt font4.nxt music.pt3
 
 AUDIOSRC := Audio/Music2.pt3
 AUDIOOBJECTS := music.pt3 
@@ -28,18 +28,15 @@ $(APP).nex : $(GFXOBJECTS) $(AUDIOOBJECTS) $(ASMOBJECTS) $(COBJECTS)
 
 	# copy all the files needed into the out folder
 	cp $(APP).nex out/$(APP).nex
-	cp music.pt3 out/music.pt3 
-	cp bg.bin out/bg.bin 
-	cp sprites.spr out/sprites.spr
-	cp balls01.spr out/balls01.spr
-	cp balls02.spr out/balls02.spr
 
 $(GFXOBJECTS): $(GFXSRC)
 	$(MAPGRABBER) GFX/Bg bitmap
 	mv GFX/bg.nxi bg.bin
+	split --bytes=6144 --suffix-length=1 --additional-suffix=.bin bg.bin bg
 
 	$(MAPGRABBER) GFX/Sprites spr s16 r0
 	mv GFX/sprites.spr sprites.spr
+	split --bytes=8192 --suffix-length=1 --additional-suffix=.spr sprites.spr sprites
 
 	$(MAPGRABBER) GFX/Font s32 nomap r0
 	mv GFX/Font.nxt font.nxt
@@ -55,12 +52,15 @@ $(GFXOBJECTS): $(GFXSRC)
 
 	$(MAPGRABBER) GFX/Font4 s16 nomap r0
 	mv GFX/Font4.nxt font4.nxt
+	split --bytes=8192 --suffix-length=1 --additional-suffix=.nxt font4.nxt font4
 
 	$(MAPGRABBER) GFX/Balls01 spr s16 r0
 	mv GFX/Balls01.spr balls01.spr
+	split --bytes=8192 --suffix-length=1 --additional-suffix=.spr balls01.spr balls01
 
 	$(MAPGRABBER) GFX/Balls02 spr s16 r0
 	mv GFX/Balls02.spr balls02.spr
+	split --bytes=8192 --suffix-length=1 --additional-suffix=.spr balls02.spr balls02
 
 $(AUDIOOBJECTS): $(AUDIOSRC)
 	cp Audio/music2.pt3 music.pt3
@@ -83,7 +83,6 @@ clean:
 	rm *.nxt -f
 	rm *.pt3 -f
 	rm obj/*.o -f
-	rm out/*.* -f
 
 print:
 	@$(ECHO) "****** Make variables ******"

@@ -15,8 +15,6 @@
 #define SPRITES_OVER_BORDER        2
 #define SPRITES_ENABLE_CLIPPING    16
 
-bool load_ball_textures_to_memory(char* filename, uint16_t startBank, uint8_t totalBanks);
-
 void enable_sprites()
 {
   IO_NEXTREG_REG = REG_SPRITE_LAYER_SYSTEM;
@@ -84,73 +82,22 @@ void set_pattern(uint8_t *sprite_pattern)
   } while(index++ != 255);
 }
 
-bool sprites_load_patterns(char* filename)
+void create_sprite_patterns()
 {
-  uint8_t filehandle;
-  errno = 0;
-  uint8_t col;
-
   set_sprite_pattern_index(0);
 
-  filehandle = esxdos_f_open(filename, ESXDOS_MODE_R | ESXDOS_MODE_OE);
-  if (errno)
+  for ( uint8_t bank = spriteBankStart; bank <= spriteBankStart+1; bank++)
   {
-    return false;
-  }
+    ZXN_WRITE_MMU1(bank);
 
-  for ( uint16_t l = 0; l < 32 * 32 * 8 * 2; l++  )
-  {
-    esxdos_f_read(filehandle, (void *) &col, 1);
-    if (errno)
+    uint8_t* basepokeaddress = (uint8_t *)0x2000;
+
+    uint8_t col = 0;
+    for ( uint16_t p=0; p < 0x2000; p++)
     {
-      return false;
-    }
-
-    IO_SPRITE_PATTERN = col;
-  }
-
-  esxdos_f_close(filehandle);
-
-  return true;
-}
-
-bool sprites_load_ball_patterns()
-{
-  load_ball_textures_to_memory("balls01.spr", ballsBank1Start, 1);
-  load_ball_textures_to_memory("balls02.spr", ballsBank2Start, 1);
-
-  return true;
-}
-
-bool load_ball_textures_to_memory(char* filename, uint16_t startBank, uint8_t totalBanks)
-{
-  uint8_t filehandle;
-  errno = 0;
-
-//  int saveBank7 = ZXN_READ_MMU0();
-
-  filehandle = esxdos_f_open(filename, ESXDOS_MODE_R | ESXDOS_MODE_OE);
-  if (errno)
-  {
-    return false;
-  }
-
-  for (uint8_t bankIndex = 0; bankIndex <= totalBanks; bankIndex++)
-  {
-    uint8_t* destination = 0x2000;
-    ZXN_WRITE_MMU1(startBank + bankIndex);
-
-    esxdos_f_read(filehandle, (void *) destination, 1024*8);
-    if (errno)
-    {
-      return false;
+      IO_SPRITE_PATTERN = basepokeaddress[p];
     }
   }
 
-  esxdos_f_close(filehandle);
-
-  // put back the main memory
-  ZXN_WRITE_MMU1(0xff);
-
-  return true;
+  ZXN_WRITE_MMU1(255);
 }

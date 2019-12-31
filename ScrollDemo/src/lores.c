@@ -6,8 +6,12 @@
 #include <errno.h>
 #include <arch/zxn/esxdos.h>
 
+#include "defines.h"
+
 #define LOWRES_TOP_HALF     (uint8_t*)(0x4000)
 #define LOWRES_BOTTOM_HALF  (uint8_t*)(0x6000)
+
+// (128 * 48)= 6144 bytes in each half
 
 // NOTE : Assume values for xpos, ypos are valid ( 0-127, 0-95)
 void loResPlot(uint8_t xpos, uint8_t ypos, uint8_t colourIndex)
@@ -43,7 +47,6 @@ void loResSetClipWindow(uint8_t left, uint8_t right, uint8_t top, uint8_t bottom
   IO_NEXTREG_DAT = right;
   IO_NEXTREG_DAT = top;
   IO_NEXTREG_DAT = bottom;
-
 }
 
 void loResSetInitPallete()
@@ -71,42 +74,27 @@ void loResSetInitPallete()
   IO_NEXTREG_DAT = 0xff;      // border white
 }
 
-bool loResLoadImage(char* filename)
+void loResDrawImage()
 {
-  uint8_t filehandle;
-  errno = 0;
-
-  filehandle = esxdos_f_open(filename, ESXDOS_MODE_R | ESXDOS_MODE_OE);
-  if (errno)
-  {
-    return false;
-  }
+  ZXN_WRITE_MMU1(loresBGBankStart);
 
   uint8_t* destination = LOWRES_TOP_HALF;
+  uint8_t* source = (uint8_t *)0x2000;
 
-  for ( uint8_t ypos = 0; ypos < 48; ypos++)
+  for ( uint16_t p=0; p < 6144; p++)
   {
-    esxdos_f_read(filehandle, (void *) destination, 128);
-    if (errno)
-    {
-      return false;
-    }
-    destination += 128;
+    *destination++ = *source++;
   }
+
+  ZXN_WRITE_MMU1(loresBGBankStart+1);
 
   destination = LOWRES_BOTTOM_HALF;
+  source = (uint8_t *)0x2000;
 
-  for ( uint8_t ypos = 0; ypos < 48; ypos++)
+  for ( uint16_t p=0; p < 6144; p++)
   {
-    esxdos_f_read(filehandle, (void *) destination, 128);
-    if (errno)
-    {
-      return false;
-    }
-    destination += 128;
+    *destination++ = *source++;
   }
-
-  esxdos_f_close(filehandle);
-
-  return true;
+  ZXN_WRITE_MMU1(255);
 }
+

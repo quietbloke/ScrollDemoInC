@@ -50,5 +50,29 @@ SECTION PAGE_47
 BINARY "font3h.nxt"
 
 SECTION PAGE_48
+BINARY "font4a.nxt"
+SECTION PAGE_49
+BINARY "font4b.nxt"
 
-BINARY "font4.nxt"
+SECTION PAGE_50
+BINARY "music.pt3"
+
+
+SECTION PAGE_52
+BINARY "balls01a.spr"
+SECTION PAGE_53
+BINARY "balls01b.spr"
+SECTION PAGE_54
+BINARY "balls02a.spr"
+SECTION PAGE_55
+BINARY "balls02b.spr"
+
+SECTION PAGE_56
+BINARY "spritesa.spr"
+SECTION PAGE_57
+BINARY "spritesb.spr"
+
+SECTION PAGE_58
+BINARY "bga.bin"
+SECTION PAGE_59
+BINARY "bgb.bin"

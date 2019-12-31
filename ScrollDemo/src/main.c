@@ -18,7 +18,6 @@
 #include "scroller.h"
 #include "colourbars.h"
 #include "vt_sound.h"
-#include "music.h"
 #include "dma.h"
 
 #define MEMORY_BLOCK_START_ADDRESS 0x2000
@@ -27,7 +26,7 @@ extern uint8_t music_module[];
 
 uint8_t   Layer2YClip         = 160;      // y clip on layer2
 uint16_t  Layer2YClipDelay	  = 220;      // delay for base text to appear
-uint8_t   SpriteYClip         =  0;       // y clip on sprite layer
+uint8_t   SpriteYClip         = 0;        // y clip on sprite layer
 uint16_t  SpriteYClipDelay	  = 720;      // delay for logo to appear
 uint16_t  LoResClipDelay      = 1550;     // delay for background to appear
 uint8_t   LoResClip           = 0;        // loRes clip value
@@ -192,23 +191,9 @@ int main(void)
   loResSetClipWindow ( 0, 255, 255, 255); // hide the bg 
   layer2SetClipWindow ( 0, 255, 255, 255); // hide the sprite window
 
-  if ( !loResLoadImage("bg.bin"))
-  {
-    zx_border(INK_RED);
-    return 1;
-  }
+  loResDrawImage();
 
-  if ( !sprites_load_ball_patterns())
-  {
-    zx_border(INK_RED);
-    return 1;
-  }
-
-  if ( !sprites_load_patterns("sprites.spr"))
-  {
-    zx_border(INK_RED);
-    return 1;
-  }
+  create_sprite_patterns();
 
   // Draw the 4 rounded corner sprites
   set_sprite(32,32+(192-16), 32, true);
@@ -238,10 +223,10 @@ int main(void)
   loResSetOffsetX(sinOffsetX[loresAngleSin]);
   loResSetOffsetY(sinOffsetX[loresAngleCos]);
 
-  if(!loadMusic())
-  {
-    return 1;
-  }
+//  if(!loadMusic())
+//  {
+//    return 1;
+//  }
 
   // NOTE : we need to move the code org to 0x8184 (zxpragma.inc)
   // because the interrupt table and code is in 0x8000 - 0x8183
