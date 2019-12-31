@@ -22,47 +22,10 @@ void layer2SetClipWindow(uint8_t left, uint8_t right, uint8_t top, uint8_t botto
 
 }
 
-bool loadFont(char* filename, uint16_t startBank, uint8_t totalBanks)
-{
-  uint8_t filehandle;
-  errno = 0;
-
-  int saveBank7 = ZXN_READ_MMU0();
-
-  filehandle = esxdos_f_open(filename, ESXDOS_MODE_R | ESXDOS_MODE_OE);
-  if (errno)
-  {
-    return false;
-  }
-
-  for (uint8_t bankIndex = 0; bankIndex <= totalBanks; bankIndex++)
-  {
-    uint8_t* destination = 0x2000;
-    ZXN_WRITE_MMU1(startBank + bankIndex);
-
-    esxdos_f_read(filehandle, (void *) destination, 1024*8);
-    if (errno)
-    {
-      return false;
-    }
-  }
-
-  esxdos_f_close(filehandle);
-  ZXN_WRITE_MMU1(0xff);
-
-  return true;
-}
-
 void layer2Initialise()
 {
   // specify which ram bank the layer2 data exists ( note : this is a 16k page)
   ZXN_NEXTREG(REG_LAYER_2_RAM_BANK, layer216KBankStart);
-
-  // Load fonts
-//  loadFont("font.nxt", fontBankStart, 8);
-//  loadFont("font2.nxt", font2BankStart, 8);
-//  loadFont("font3.nxt", font3BankStart, 8);
-//  loadFont("font4.nxt", font4BankStart, 2);
 }
 
 void layer2Clear(uint8_t colour)

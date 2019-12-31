@@ -8,7 +8,7 @@ SRCDIR := src
 OBJDIR := obj
 LIB := sdcc_iy
 
-EMU := ../../../tools/CSpect/CSpect.exe -zxnext -s14 -w4 -r -vsync -mmc=./
+EMU := ../../../../tools/CSpect/CSpect.exe -zxnext -s14 -w4 -r -vsync -mmc=./
 MAPGRABBER := ../../../tools/MapGrabber 
 
 GFXSRC := GFX/Bg.bmp GFX/Sprites.bmp GFX/Balls01.bmp GFX/Balls02.bmp
@@ -72,9 +72,8 @@ $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	zcc +zxn -vn -m -startup=$(STARTUP) -clib=$(LIB) $< -o $@ -c -pragma-include:zpragma.inc
 
 run: $(APP).nex
-	cd out
+	cd out; \
 	$(EMU) $(APP).nex
-	cd ..
 
 clean:
 	rm *.bin -f
