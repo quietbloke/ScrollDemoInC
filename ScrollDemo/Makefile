@@ -8,20 +8,31 @@ SRCDIR := src
 OBJDIR := obj
 LIB := sdcc_iy
 
-EMU := ../../../../tools/CSpect/CSpect.exe -zxnext -s14 -w3 -r -vsync -mmc=./
-MAPGRABBER := ../../../tools/MapGrabber 
+# Detect Operating System
+ifeq ($(OS),Windows_NT)
+    OSNAME := WIN32
+    MONO := 
+    WINE := 
+else
+    OSNAME != uname -s
+    MONO := mono
+    WINE := wine
+endif
+
+EMU := $(MONO) ../../../../tools/CSpect/CSpect.exe -zxnext -s14 -w3 -r -vsync -mmc=./
+MAPGRABBER := $(WINE) ../../../tools/MapGrabber
 
 GFXSRC := GFX/Bg.bmp GFX/Sprites.bmp GFX/Balls01.bmp GFX/Balls02.bmp
-GFXOBJECTS := bg.bin sprites.spr balls01.spr balls02.spr font.nxt font2.nxt font3.nxt font4.nxt music.pt3
+GFXOBJECTS := Bg.bin Sprites.spr balls01.spr balls02.spr font.nxt font2.nxt font3.nxt font4.nxt music.pt3
 
 AUDIOSRC := Audio/Music2.pt3
-AUDIOOBJECTS := music.pt3 
+AUDIOOBJECTS := music.pt3
 
 CSOURCES != find src -type f -name "*.c" | sort
 ASMSOURCES != find src -type f -name "*.asm" | sort
 
-COBJECTS = $(CSOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o) 
-ASMOBJECTS = $(ASMSOURCES:$(SRCDIR)/%.asm=$(OBJDIR)/%.o) 
+COBJECTS = $(CSOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+ASMOBJECTS = $(ASMSOURCES:$(SRCDIR)/%.asm=$(OBJDIR)/%.o)
 
 $(APP).nex : $(GFXOBJECTS) $(AUDIOOBJECTS) $(ASMOBJECTS) $(COBJECTS)
 	zcc +zxn -vn -m -startup=$(STARTUP) -clib=$(LIB) $(COBJECTS) $(ASMSOURCES) -o $(APP) -pragma-include:zpragma.inc -subtype=nex -Cz"--fullsize --clean" -create-app
@@ -29,14 +40,17 @@ $(APP).nex : $(GFXOBJECTS) $(AUDIOOBJECTS) $(ASMOBJECTS) $(COBJECTS)
 	# copy all the files needed into the out folder
 	cp $(APP).nex out/$(APP).nex
 
+	# Also copy the output file into the sdcard image
+	$(WINE) ../../../../tools/hdfmonkey.exe put ../../../../tools/CSpect/cspect-next-2gb.img $(APP).nex $(APP).nex 
+
 $(GFXOBJECTS): $(GFXSRC)
 	$(MAPGRABBER) GFX/Bg bitmap
-	mv GFX/bg.nxi bg.bin
-	split --bytes=6144 --suffix-length=1 --additional-suffix=.bin bg.bin bg
+	mv GFX/Bg.nxi Bg.bin
+	split --bytes=6144 --suffix-length=1 --additional-suffix=.bin Bg.bin bg
 
 	$(MAPGRABBER) GFX/Sprites spr s16 r0
-	mv GFX/sprites.spr sprites.spr
-	split --bytes=8192 --suffix-length=1 --additional-suffix=.spr sprites.spr sprites
+	mv GFX/Sprites.spr Sprites.spr
+	split --bytes=8192 --suffix-length=1 --additional-suffix=.spr Sprites.spr sprites
 
 	$(MAPGRABBER) GFX/Font s32 nomap r0
 	mv GFX/Font.nxt font.nxt
@@ -63,7 +77,7 @@ $(GFXOBJECTS): $(GFXSRC)
 	split --bytes=8192 --suffix-length=1 --additional-suffix=.spr balls02.spr balls02
 
 $(AUDIOOBJECTS): $(AUDIOSRC)
-	cp Audio/music2.pt3 music.pt3
+	cp Audio/Music2.pt3 music.pt3
 
 $(OBJDIR)/%.o : $(SRCDIR)/%.asm
 	zcc +zxn -vn -m -startup=$(STARTUP) -clib=$(LIB) $< -o $@ -c -pragma-include:zpragma.inc

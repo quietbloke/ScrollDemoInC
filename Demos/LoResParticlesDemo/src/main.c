@@ -153,7 +153,7 @@ int main(void)
 
 static void SetBorder(unsigned char border)
 {
-//  zx_border(border);
+  zx_border(border);
   borderColour = border;
 }
 

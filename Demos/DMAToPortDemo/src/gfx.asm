@@ -1,0 +1,8 @@
+SECTION PAGE_52
+BINARY "balls01a.spr"
+SECTION PAGE_53
+BINARY "balls01b.spr"
+SECTION PAGE_54
+BINARY "balls02a.spr"
+SECTION PAGE_55
+BINARY "balls02b.spr"
